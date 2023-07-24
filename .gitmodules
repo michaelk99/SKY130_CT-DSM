@@ -1,0 +1,3 @@
+[submodule "python-deltasigma"]
+	path = python-deltasigma
+	url = https://github.com/Y-F-Acoustics/python-deltasigma
