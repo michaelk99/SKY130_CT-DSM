@@ -1,7 +1,7 @@
 # Requirements
 
 + Code (incl. python-deltasigma toolbox) from Git repo. [1] 
-	+ donwload/clone to \<install-path\> 
+	+ download/clone to \<install-path\> 
 
 + Python 3
 
@@ -34,7 +34,7 @@
 
 # Troubleshooting
 
-+ If toolbox functions do not work, check python version. Python 3.10.0 caused issues. Verison 3.9.5 and 3.9.7 should work.
++ If toolbox functions do not work, check python version. Versions ``3.10.6``, ``3.9.5``, and ``3.9.7`` should work.
 	+ `conda install python=3.9.7`
 
 + Due to some unkown reason, python-deltasigma does not use the faster simulation backend, even though Cython is installed.
@@ -52,4 +52,4 @@
 
 # References
 
-[1] Github Repo, https://github.com/michaelk99/SKY130_CT-DSM/y
+[1] Github Repo, https://github.com/michaelk99/SKY130_CT-DSM/
