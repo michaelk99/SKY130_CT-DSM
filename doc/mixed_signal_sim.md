@@ -1,6 +1,6 @@
 # Requirements
 
-+ Working conda environment as described in `system-level/doc/python-deltasigma-setup.md`
++ Working conda environment as described in `doc/python-deltasigma-setup.md`
 
 + Python Package *vcdvcd*
 
