@@ -7,26 +7,32 @@ This case study was performed in the context of a master thesis, and will be pub
 **Figure 1**: Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC. 
 
 # System-Level Design
-![<img src="doc/fig/sqnrExplore2.png" width="600"/>](doc/fig/sqnrExplore2.png)
+[<img src="doc/fig/sqnrExplore2.png" width="600"/>](doc/fig/sqnrExplore2.png)
+
 **Figure 2**: High-level system design exploration. 
 
 # Feedback vs. Feedforward Loop Filter
-![<img src="doc/fig/dsm_block_diag.png" width="600"/>](doc/fig/dsm_block_diag.png)
+[<img src="doc/fig/dsm_block_diag.png" width="600"/>](doc/fig/dsm_block_diag.png)
+
 **Figure 3**: Block diagram of a DSM with feedback (blue) and feedforward coefficients (red). 
 
-![<img src="doc/fig/modStatesScaled.png" width="600"/>](doc/fig/modStatesScaled.png)
+[<img src="doc/fig/modStatesScaled.png" width="600"/>](doc/fig/modStatesScaled.png)
+
 **Figure 4**: Internal states of the CIFB CT-DSM after dynamic range scaling, given an input tone with the maximum stable amplitude (MSA). 
 
-![Smoothed PSD](doc/fig/psdCtAvg.png)
+[<img src="doc/fig/psdCtAvg.png" width="600"/>](doc/fig/psdCtAvg.png)
+
 **Figure 5**: PSD of the output of the modulator $v(t)$.
 
 # Top Level Schematic
 ![Top Level Schem](doc/fig/top_schem_2.png)
 **Figure 7**: Top-level schematic of the proposed CT-DSM.
 # Front-End 
-![<img src="doc/fig/frontend.png" width="500"/>](doc/fig/frontend.png)
+[<img src="doc/fig/frontend.png" width="500"/>](doc/fig/frontend.png)
+
 **Figure 7**: Schematic of the frontend transconductor.
-![<img src="doc/fig/auxamp.png" width="500"/>](doc/fig/auxamp.png)
+[<img src="doc/fig/auxamp.png" width="500"/>](doc/fig/auxamp.png)
+
 **Figure 8**: Schematic of the auxiliary amplifier of the frontend transconductor.
 
 # Results 
