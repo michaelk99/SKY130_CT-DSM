@@ -59,8 +59,10 @@ This case study was performed in the context of a master thesis, and will be pub
  | Aux. Amp. W/L Casc. CS $^b$ $(µ\mathrm{m}/µ\mathrm{m})$  |$40/80$ |-|$12/24$     |
  | Power Consumption Input $G_\mathrm{m}$ $(µ\mathrm{W})$  |$8.8^c$ |$2.4$ |$4.2$       |
 
-$^a$ Equivalent white noise spectral density based on parameters “BW” and “Total Input Noise”.  
+$^a$ Equivalent white noise spectral density based on parameters “BW” and “Total Input Noise”.
+
 $^b$ Current source devices of the folded cascodes, $M_{11}$ and $M_{12}$ in Figure 8.
+
 $^c$ Estimate based on 70% bias current reduction of the main transconductor (Feedback Assisted $G_\mathrm{m}$ Linearization). The final value was doubled to take the CMFB circuit into account.
 
 # References
