@@ -54,9 +54,9 @@ This case study was performed in the context of a master thesis, and will be pub
  | Quantizer Bits                      |$1$    |$5$     |$4$        |
  | Noise-Shaping Order                 |$4$    |$1$     |$2$      |
  | Total Input Noise $(µ\mathrm{V}_\mathrm{rms})$  |$3.9$   |$1.3$     |$9.5$ |
- | Eq. Input Noise Density$^a$ $(\mathrm{V}/\sqrt{\mathrm{Hz}})$ |$345$|$92$| $95$ |  
+ | Eq. Input Noise Density $^a$ $(\mathrm{V}/\sqrt{\mathrm{Hz}})$ |$345$|$92$| $95$ |  
  | Aux. Amp. W/L Input Pair $(µ\mathrm{m}/µ\mathrm{m})$    |$500/10$ |-|$250/1.6$  |
- | Aux. Amp. W/L Casc. CS$^b$ $(µ\mathrm{m}/µ\mathrm{m})$  |$40/80$ |-|$12/24$     |
+ | Aux. Amp. W/L Casc. CS $^b$ $(µ\mathrm{m}/µ\mathrm{m})$  |$40/80$ |-|$12/24$     |
  | Power Consumption Input $G_\mathrm{m}$ $(µ\mathrm{W})$  |$8.8^c$ |$2.4$ |$4.2$       |
 
 $^a$ Equivalent white noise spectral density based on parameters “BW” and “Total Input Noise”.  
