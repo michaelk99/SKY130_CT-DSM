@@ -4,6 +4,7 @@ This case study was performed in the context of a master thesis, and will be pub
 
 # Abstract
 ![Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC.](doc/fig/block_diag_all.png)
+
 **Figure 1**: Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC. 
 
 # System-Level Design
@@ -31,6 +32,7 @@ This case study was performed in the context of a master thesis, and will be pub
 [<img src="doc/fig/frontend.png" width="500"/>](doc/fig/frontend.png)
 
 **Figure 7**: Schematic of the frontend transconductor.
+
 [<img src="doc/fig/auxamp.png" width="500"/>](doc/fig/auxamp.png)
 
 **Figure 8**: Schematic of the auxiliary amplifier of the frontend transconductor.
