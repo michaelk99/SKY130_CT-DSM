@@ -28,7 +28,7 @@
 	
 + Calculate PSD w/ MATLAB script `circuit-design/matlab/analyze_ms_results.m`
 
-	+ Set correct path to load <matlab-output-path>
+	+ Set correct path to load `<matlab-output-path>`
 	
 	+ Run MATLAB script
 
