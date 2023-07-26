@@ -15,6 +15,7 @@ was omitted throughout most parts.
 ![Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC.](doc/fig/block_diag_all.png)
 
 **Figure 1**: Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC. 
+
 # System-Level Design
 * Input-referred noise $<1~\mu\mathrm{V}_\mathrm{rms}$
 * Input impedance $>100~\mathrm{M}\Omega$
@@ -26,11 +27,16 @@ was omitted throughout most parts.
 * Signal-to-Quantization-Noise-Ratio (SQNR) of $>140~\mathrm{dB}$
 * Signal-to-Noise-Ratio (SNR) of $130~\mathrm{dB}$
 
-The input-related specifications stem from the target application, which is biosignal acquisition. The rather slow signals have a large source impedance and are in the $\mu\mathrm{V}$ range. Furthermore, contact voltages at the electrode-skin interface must be handled appropriately, which leads to a large input voltage range. Since up to 1024 channels are required, the power consumption of a single channel is limited to only a fraction of the system's power budget. Lastly, the available system clock limits the max. oversampling ratio.
+The input-related specifications stem from the target application, which is biosignal acquisition. 
+The rather slow signals have a large source impedance and are in the $\mu\mathrm{V}$ range. Furthermore, contact voltages at the electrode-skin interface must be handled appropriately, which leads to a large input voltage range. 
+Since up to 1024 channels are required, the power consumption of a single channel is limited to only a fraction of the system's power budget. 
+Lastly, the available system clock limits the max. oversampling ratio.
 
-The fact that the DS-ADC should directly interface with the signal source, requires the implementation of a continuous-time (CT) DSM, due to its inherent anti-aliasing property.
+The fact that the DS-ADC should directly interface with the signal source, 
+requires the implementation of a continuous-time (CT) DSM, due to its inherent anti-aliasing property.
 
-Since circuit noise should dominate the noise floor, the SQNR was chosen $10~\mathrm{dB}$ larger than the target SNR. Given the fixed OSR and a simple flash quantizer, a 4th-order DSM is necessary, see Fig. 2.
+Since circuit noise should dominate the noise floor, the SQNR was chosen $10~\mathrm{dB}$ larger than the target SNR. 
+Given the fixed OSR and a simple flash quantizer, a 4th-order DSM is necessary, see Fig. 2.
 
 [<img src="doc/fig/sqnrExplore2.png" width="600"/>](doc/fig/sqnrExplore2.png)
 
@@ -40,10 +46,10 @@ Since circuit noise should dominate the noise floor, the SQNR was chosen $10~\ma
 
 **Figure 3**: Block diagram of a DSM with feedback (blue) and feedforward coefficients (red). 
 
-This 4th-order CT-DSM may be either implemented by a feedback (FB), or a feedforward (FF) structure. The block diagram, which depicts both structures is shown in Fig. 3. The corresponding state-space description is:
+This 4th-order CT-DSM may be either implemented by a feedback (FB), or a feedforward (FF) structure. 
+The block diagram, which depicts both structures is shown in Fig. 3. The corresponding state-space description is:
 
-$
-\mathbf{ABCD}=\begin{bmatrix}
+$\mathbf{ABCD}=\begin{bmatrix}
 		\begin{array}{c|c}
 			\mathbf{A} & \mathbf{B}\\
 			\hline
@@ -59,13 +65,11 @@ $
 			\hline
 			c_1 & c_2 & c_3 & c_4 & 0 & 0
 		\end{array}
-	\end{bmatrix}
-$
+	\end{bmatrix}$
 
 In the case of a FB modulator (blue coefficients), the ∆Σ toolbox gave the following set of coefficients:
 
-$
-    \mathbf{ABCD}_\textrm{FB}=
+$\mathbf{ABCD}_\textrm{FB}=
 	\begin{bmatrix}
 		\begin{array}{cccc|cc}
 			0 & 0 & 0 & 0 & 0.00614 & -0.00614\\
@@ -75,8 +79,7 @@ $
 			\hline
 			0 & 0 & 0 & 1 & 0 & 0
 		\end{array}
-	\end{bmatrix}
-$
+	\end{bmatrix}$
 
 However, the output of the integrators $x_i$ (Fig. 3) must be scaled to fit within the supply voltage, as shown in Fig. 4. 
 
@@ -91,7 +94,9 @@ However, the 2-bit output sequence $v(t)$ of the quantizer (see Fig. 3 and 4) mu
 **Figure 5**: PSD of the output of the modulator $v(t)$.
 
 # Front-End 
-The most important result from system-level simulations is the need for a third-order distortion ratio $(\mathrm{HD}_3)$ of $<-90~\mathrm{dB}$. Since no noise shaping is present at the first stage, the front-end transconductor must fulfill this requirement along with the noise, input voltage range and input impedance specifications from above. All these specifications lead to a source-degenerated differential pair with auxiliary amplifiers (Fig. 7) at both inputs, to increase the $g_\mathrm{m}$ of the transistors $M_1$, see Fig. 6. Since the power consumption is inherently linked with the linear input voltage range of this circuit, the so-called ``Feedback Assisted $G_\mathrm{m}$ Linearization'' proposed by [4] is a crucial part of this circuit. The concept of this technique is to facilitate the virtual ground nodes of the aux. amplifiers as summation points (current-domain) of the feedback signal. This allows to ideally cancel the signal current across the degeneration resistors $R_\mathrm{s}$. Consequently, the bias current $I_0$ may be reduced. 
+The most important result from system-level simulations is the need for a third-order distortion ratio $(\mathrm{HD}_3)$ of $<-90~\mathrm{dB}$.
+Since no noise shaping is present at the first stage, the front-end transconductor must fulfill this requirement along with the noise, input voltage range and input impedance specifications from above. All these specifications lead to a source-degenerated differential pair with auxiliary amplifiers (Fig. 7) at both inputs, to increase the $g_\mathrm{m}$ of the transistors $M_1$, see Fig. 6. Since the power consumption is inherently linked with the linear input voltage range of this circuit, the so-called ''Feedback Assisted $G_\mathrm{m}$ Linearization'' proposed by [4] is a crucial part of this circuit. 
+The concept of this technique is to facilitate the virtual ground nodes of the aux. amplifiers as summation points (current-domain) of the feedback signal. This allows to ideally cancel the signal current across the degeneration resistors $R_\mathrm{s}$. Consequently, the bias current $I_0$ may be reduced. 
 
 [<img src="doc/fig/frontend.png" width="500"/>](doc/fig/frontend.png)
 
@@ -101,17 +106,22 @@ The most important result from system-level simulations is the need for a third-
 
 **Figure 7**: Schematic of the auxiliary amplifier of the frontend transconductor.
 
-The 2-bit output $v(t)$ (Fig. 4) is too coarse for this technique. Therefore, the feedback signal is low-pass filtered with a digital filter (FIR), which leads to the use of so-called FIR-DACs. In addition to the feedback path in the first stage, another FIR-DAC is required to cancel the additional loop delay introduced by the low-pass filter.
+The 2-bit output $v(t)$ (Fig. 4) is too coarse for this technique. Therefore, the feedback signal is low-pass filtered with a digital filter (FIR), 
+which leads to the use of so-called FIR-DACs. In addition to the feedback path in the first stage, 
+another FIR-DAC is required to cancel the additional loop delay introduced by the low-pass filter.
 
 # Top-Level Schematic
-A thorough analysis in terms of several loop filter non-idealities was conducted and circuit-level design considerations in light of the findings were made. Overall, a FF loop filter is best suited in terms of noise budgets per stage, power and chip-area efficiency. The top-level schematic is given below in Fig. 8.
+A thorough analysis in terms of several loop filter non-idealities was conducted and circuit-level design considerations in light of the findings were made. 
+Overall, a FF loop filter is best suited in terms of noise budgets per stage, power and chip-area efficiency. 
+The top-level schematic is given below in Fig. 8.
 
 ![Top Level Schem](doc/fig/top_schem_2.png)
 
 **Figure 8**: Top-level schematic of the proposed CT-DSM.
 
 # Results
-The main performance metrics of the implemented front-end transconductor are summarized along with system-level parameters and compared to two state-of-the-art neural recording ICs in Table 1.
+The main performance metrics of the implemented front-end transconductor are summarized along with system-level 
+parameters and compared to two state-of-the-art neural recording ICs in Table 1.
 
 **Table 1**: A comparison with state-of-the-art bidirectional neural recording ICs.
 
@@ -139,13 +149,17 @@ $^a$ Equivalent white noise spectral density based on parameters “BW” and �
 
 $^b$ Current source devices of the folded cascodes, $M_{11}$ and $M_{12}$ in Figure 8.
 
-$^c$ Estimate based on 70% bias current reduction of the main transconductor (Feedback Assisted $G_\mathrm{m}$ Linearization). The final value was doubled to take the CMFB circuit into account.
+$^c$ Estimate based on 70% bias current reduction of the main transconductor (Feedback Assisted $G_\mathrm{m}$ Linearization).
+The final value was doubled to take the CMFB circuit into account.
 
-The main issue of the designed circuit is the large flicker noise coefficient of the SKY130 PDK. This may be counteracted by chopper stabilization or further increasing the area of $M_1$, $M_2$, $M_{11}$ and $M_{12}$ of the auxiliary amplifiers (Fig. 7). Although the area of $M_{11}$ and $M_{12}$ is already 11 times larger than the circuit implementation from [4]. Further increasing the area may degrade the performance in terms of the input impedance and stability of the first stage.
+The main issue of the designed circuit is the large flicker noise coefficient of the SKY130 PDK. 
+This may be counteracted by chopper stabilization or further increasing the area of $M_1$, $M_2$, $M_{11}$ and $M_{12}$ of the auxiliary amplifiers (Fig. 7). Although the area of $M_{11}$ and $M_{12}$ is already 11 times larger than the circuit implementation from [4]. 
+Further increasing the area may degrade the performance in terms of the input impedance and stability of the first stage.
 
 Furthermore, increasing the OSR to reduce the required order of noise shaping may also be beneficial in terms of the tight power budget, as shown by the comparison in Table 1.
 
-Moreover, a mixed-signal/level simulation with ideal OTA macro models was performed in Ngspice, utilizing digital XSPICE blocks. This was used to verify the calculated circuit-level components based on the state-scaled prototype coefficients, see Fig. 9.
+Moreover, a mixed-signal/level simulation with ideal OTA macro models was performed in Ngspice, utilizing digital XSPICE blocks. 
+This was used to verify the calculated circuit-level components based on the state-scaled prototype coefficients, see Fig. 9.
 
 ![Mixed-Signal Sim](doc/fig/simPSD.png)
 
