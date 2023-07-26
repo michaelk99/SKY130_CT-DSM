@@ -20,7 +20,7 @@ was omitted throughout most parts.
 # System-Level Design
 * Input-referred noise $<1~\mu\mathrm{V}_\mathrm{rms}$
 * Input impedance $>100~\mathrm{M}\Omega$
-* Input voltage range $\pm260~\mathrm{mV}_\mathrm{peak}$ $(\pm250~\mathrm{mV}_\mathrm{dc}\pm10~\mathrm{mV}_\mathrm{signal})$
+* Input voltage range $\pm260~\mathrm{mV_{peak}}$ $(\pm250~\mathrm{mV_\mathrm{dc}}\pm10~\mathrm{mV_\mathrm{signal}})$
 * Power consumption $<1~\mu \mathrm{W}$
 * Signal bandwidth of $128~\mathrm{Hz}$
 * Max. oversampling ratio of $256$
