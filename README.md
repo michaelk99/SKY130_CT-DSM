@@ -137,7 +137,7 @@ This was used to verify the calculated circuit-level components based on the sta
 
 ![Mixed-Signal Sim](doc/fig/simPSD.png)
 
-**Figure 8**: PSD of mixed-signal simulation using Ngspice.
+**Figure 9**: PSD of mixed-signal simulation using Ngspice.
 
 # Summary
 The following graph summarizes the complete design decisions of this master thesis. The most significant specification items in bold-font are the starting points.
@@ -149,7 +149,7 @@ The following graph summarizes the complete design decisions of this master thes
 
 ![Param Spec Matrix](doc/fig/spec_param_matrix.png)
 
-**Figure 9**: Summary of all major design decisions.
+**Figure 10**: Summary of all major design decisions.
 
 # Future Work
 Due to the time limitation of this master thesis, several aspects could not be addressed in full detail:
