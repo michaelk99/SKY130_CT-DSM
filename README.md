@@ -1,17 +1,16 @@
 # A Case Study of an Ultra-Low-Power Delta-Sigma ADC for Biosignal Acquisition
 Author: Michael Köfinger, 2023, Johannes Kepler University (JKU) Linz, Austria, Institute for Integrated Circuits (IIC).
-This case study was performed in the context of a master thesis, and will be published on the [JKU ePUB repository](https://epub.jku.at/nav/classification/111078).
+This case study was performed in the context of a master thesis and will be published on the [JKU ePUB repository](https://epub.jku.at/nav/classification/111078).
 
 # Abstract
-This thesis performs a case study on an ultra-low-power (ULP) Delta-Sigma analog-
-to-digital converter (DS-ADC) for biosignal acquisition utilizing the Institute for
+This thesis performs a case study on an ultra-low-power (ULP) Delta-Sigma analog-to-digital converter (DS-ADC) for biosignal acquisition utilizing the Institute for
 Integrated Circuits (IIC) Open-Source IC (OSIC) tools for the Skywater 130nm
 (SKY130) process development kit (PDK). The system-level simulations were based on
 Richard Schreier’s ∆Σ toolbox, and loop-filter non-idealities were separately modeled
 in MATLAB based on the difference equations of a Delta-Sigma modulator (DSM).
 The aim is to identify an alternative system to an existing implementation based on a
 cascade of a pre-amplifier and a successive approximation register analog-to-digital
-converter (SAR-ADC), see Fig. 1. The scope of this work was set on the DSM, and the decimator
+converter (SAR-ADC), see Fig. 1. The scope of this work was set on the DSM and the decimator
 was omitted throughout most parts.
 ![Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC.](doc/fig/block_diag_all.png)
 
@@ -24,12 +23,12 @@ was omitted throughout most parts.
 * Signal bandwidth of $128~\mathrm{Hz}$
 * Max. oversampling ratio of $256$
 * ADC resolution (LSB) $<0.2~\mu\mathrm{V}_\mathrm{pp}$
-* Signal-to-Quantization-Noise-Ratio (SQNR) of $140~\mathrm{dB}$
+* Signal-to-Quantization-Noise-Ratio (SQNR) of $>140~\mathrm{dB}$
 * Signal-to-Noise-Ratio (SNR) of $130~\mathrm{dB}$
 
 The input-related specifications stem from the target application, which is biosignal acquisition. The rather slow signals have a large source impedance and are in the $\mu\mathrm{V}$ range. Furthermore, contact voltages at the electrode-skin interface must be handled appropriately, which leads to a large input voltage range. Since up to 1024 channels are required, the power consumption of a single channel is limited to only a fraction of the system's power budget. Lastly, the available system clock limits the max. oversampling ratio.
 
-The fact that the DS-ADC should directly interface the signal source, requires the implementation of a continuous-time (CT) DSM, due to its inherent anti-aliasing property.
+The fact that the DS-ADC should directly interface with the signal source, requires the implementation of a continuous-time (CT) DSM, due to its inherent anti-aliasing property.
 
 Since circuit noise should dominate the noise floor, the SQNR was chosen $10~\mathrm{dB}$ larger than the target SNR. Given the fixed OSR and a simple flash quantizer, a 4th-order DSM is necessary, see Fig. 2.
 
@@ -91,19 +90,28 @@ However, the 2-bit output sequence $v(t)$ of the quantizer (see Fig. 3 and 4) mu
 
 **Figure 5**: PSD of the output of the modulator $v(t)$.
 
-# Top Level Schematic
-![Top Level Schem](doc/fig/top_schem_2.png)
-**Figure 7**: Top-level schematic of the proposed CT-DSM.
 # Front-End 
+The most important result from system-level simulations is the need for a third-order distortion ratio $(\mathrm{HD}_3)$ of $<-90~\mathrm{dB}$. Since no noise shaping is present at the first stage, the front-end transconductor must fulfill this requirement along with the noise, input voltage range and input impedance specifications from above. All these specifications lead to a source-degenerated differential pair with auxiliary amplifiers (Fig. 7) at both inputs, to increase the $g_\mathrm{m}$ of the transistors $M_1$, see Fig. 6. Since the power consumption is inherently linked with the linear input voltage range of this circuit, the so-called ``Feedback Assisted $G_\mathrm{m}$ Linearization'' proposed by [4] is a crucial part of this circuit. The concept of this technique is to facilitate the virtual ground nodes of the aux. amplifiers as summation points (current-domain) of the feedback signal. This allows to ideally cancel the signal current across the degeneration resistors $R_\mathrm{s}$. Consequently, the bias current $I_0$ may be reduced. 
+
 [<img src="doc/fig/frontend.png" width="500"/>](doc/fig/frontend.png)
 
-**Figure 7**: Schematic of the frontend transconductor.
+**Figure 6**: Schematic of the frontend transconductor.
 
 [<img src="doc/fig/auxamp.png" width="500"/>](doc/fig/auxamp.png)
 
-**Figure 8**: Schematic of the auxiliary amplifier of the frontend transconductor.
+**Figure 7**: Schematic of the auxiliary amplifier of the frontend transconductor.
 
-# Results 
+The 2-bit output $v(t)$ (Fig. 4) is too coarse for this technique. Therefore, the feedback signal is low-pass filtered with a digital filter (FIR), which leads to the use of so-called FIR-DACs. In addition to the feedback path in the first stage, another FIR-DAC is required to cancel the additional loop delay introduced by the low-pass filter.
+
+# Top-Level Schematic
+A thorough analysis in terms of several loop filter non-idealities was conducted and circuit-level design considerations in light of the findings were made. Overall, a FF loop filter is best suited in terms of noise budgets per stage, power and chip-area efficiency. The top-level schematic is given below in Fig. 8.
+
+![Top Level Schem](doc/fig/top_schem_2.png)
+
+**Figure 8**: Top-level schematic of the proposed CT-DSM.
+
+# Results
+The main performance metrics of the implemented front-end transconductor are summarized along with system-level parameters and compared to two state-of-the-art neural recording ICs in Table 1.
 
 **Table 1**: A comparison with state-of-the-art bidirectional neural recording ICs.
 
@@ -132,6 +140,41 @@ $^a$ Equivalent white noise spectral density based on parameters “BW” and �
 $^b$ Current source devices of the folded cascodes, $M_{11}$ and $M_{12}$ in Figure 8.
 
 $^c$ Estimate based on 70% bias current reduction of the main transconductor (Feedback Assisted $G_\mathrm{m}$ Linearization). The final value was doubled to take the CMFB circuit into account.
+
+The main issue of the designed circuit is the large flicker noise coefficient of the SKY130 PDK. This may be counteracted by chopper stabilization or further increasing the area of $M_1$, $M_2$, $M_{11}$ and $M_{12}$ of the auxiliary amplifiers (Fig. 7). Although the area of $M_{11}$ and $M_{12}$ is already 11 times larger than the circuit implementation from [4]. Further increasing the area may degrade the performance in terms of the input impedance and stability of the first stage.
+
+Furthermore, increasing the OSR to reduce the required order of noise shaping may also be beneficial in terms of the tight power budget, as shown by the comparison in Table 1.
+
+Moreover, a mixed-signal/level simulation with ideal OTA macro models was performed in Ngspice, utilizing digital XSPICE blocks. This was used to verify the calculated circuit-level components based on the state-scaled prototype coefficients, see Fig. 9.
+
+![Mixed-Signal Sim](doc/fig/simPSD.png)
+
+**Figure 8**: PSD of mixed-signal simulation using Ngspice.
+
+# Summary
+The following graph summarizes the complete design decisions of this master thesis. The most significant specification items in bold-font are the starting points.
+
+1. Red: System level
+2. Blue: Circuit level without improvement, coarse FB signal, conventional DSM
+3. Green: Circuit level with proposed front-end, FIR-DAC, single-bit quantizer
+4. Yellow: Circuit level alternative [4], high-level time-based quantizer
+
+![Param Spec Matrix](doc/fig/spec_param_matrix.png)
+
+**Figure 9**: Summary of all major design decisions.
+
+# Future Work
+Due to the time limitation of this master thesis, several aspects could not be addressed in full detail:
+
+* Excess loop delay compensation
+* Simulation and implementation of the FIR-DACs
+* Circuit design and layout of stages 2 to 4
+* Circuit design and layout of the quantizer
+* Further improvements and layout of the front-end transconductor
+* Verification of the ''Feedback Assisted $G_\mathrm{m}$ Linearization'' technique [4]
+* Implementation of the decimator
+
+Moreover, the influence of a larger OSR, which would reduce the loop filter order, should be reassessed. However, the system clock was fixed in the context of this work, which required a 4th order CT-DSM.
 
 # References
 [1] S. Schmickl, T. Schumacher, P. Fath, T. Faseth and H. Pretl, "A 350-nW Low-Noise Amplifier With Reduced Flicker-Noise for Bio-Signal Acquisition," 2020 Austrochip Workshop on Microelectronics (Austrochip), Vienna, Austria, 2020, pp. 9-12, doi: 10.1109/Austrochip51129.2020.9232981.
