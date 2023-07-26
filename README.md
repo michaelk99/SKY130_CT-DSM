@@ -12,6 +12,7 @@ The aim is to identify an alternative system to an existing implementation based
 cascade of a pre-amplifier and a successive approximation register analog-to-digital
 converter (SAR-ADC), see Fig. 1. The scope of this work was set on the DSM and the decimator
 was omitted throughout most parts.
+
 ![Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC.](doc/fig/block_diag_all.png)
 
 **Figure 1**: Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC. 
