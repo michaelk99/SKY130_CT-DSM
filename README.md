@@ -3,23 +3,89 @@ Author: Michael Köfinger, 2023, Johannes Kepler University (JKU) Linz, Austria,
 This case study was performed in the context of a master thesis, and will be published on the [JKU ePUB repository](https://epub.jku.at/nav/classification/111078).
 
 # Abstract
+This thesis performs a case study on an ultra-low-power (ULP) Delta-Sigma analog-
+to-digital converter (DS-ADC) for biosignal acquisition utilizing the Institute for
+Integrated Circuits (IIC) Open-Source IC (OSIC) tools for the Skywater 130nm
+(SKY130) process development kit (PDK). The system-level simulations were based on
+Richard Schreier’s ∆Σ toolbox, and loop-filter non-idealities were separately modeled
+in MATLAB based on the difference equations of a Delta-Sigma modulator (DSM).
+The aim is to identify an alternative system to an existing implementation based on a
+cascade of a pre-amplifier and a successive approximation register analog-to-digital
+converter (SAR-ADC), see Fig. 1. The scope of this work was set on the DSM, and the decimator
+was omitted throughout most parts.
 ![Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC.](doc/fig/block_diag_all.png)
 
 **Figure 1**: Existing system, PRE-AMP [1] and SAR-ADC [2], and the alternative structure, a CT DS-ADC. 
-
 # System-Level Design
+* Input-referred noise $<1~\mu\mathrm{V}_\mathrm{rms}$
+* Input impedance $>100~\mathrm{M}\Omega$
+* Input voltage range $\pm260~\mathrm{mV}_\mathrm{peak}$ $(\pm250~\mathrm{mV}_\mathrm{dc}\pm10~\mathrm{mV}_\mathrm{signal})$
+* Power consumption $<1~\mu \mathrm{W}$
+* Signal bandwidth of $128~\mathrm{Hz}$
+* Max. oversampling ratio of $256$
+* ADC resolution (LSB) $<0.2~\mu\mathrm{V}_\mathrm{pp}$
+* Signal-to-Quantization-Noise-Ratio (SQNR) of $140~\mathrm{dB}$
+* Signal-to-Noise-Ratio (SNR) of $130~\mathrm{dB}$
+
+The input-related specifications stem from the target application, which is biosignal acquisition. The rather slow signals have a large source impedance and are in the $\mu\mathrm{V}$ range. Furthermore, contact voltages at the electrode-skin interface must be handled appropriately, which leads to a large input voltage range. Since up to 1024 channels are required, the power consumption of a single channel is limited to only a fraction of the system's power budget. Lastly, the available system clock limits the max. oversampling ratio.
+
+The fact that the DS-ADC should directly interface the signal source, requires the implementation of a continuous-time (CT) DSM, due to its inherent anti-aliasing property.
+
+Since circuit noise should dominate the noise floor, the SQNR was chosen $10~\mathrm{dB}$ larger than the target SNR. Given the fixed OSR and a simple flash quantizer, a 4th-order DSM is necessary, see Fig. 2.
+
 [<img src="doc/fig/sqnrExplore2.png" width="600"/>](doc/fig/sqnrExplore2.png)
 
 **Figure 2**: High-level system design exploration. 
 
-# Feedback vs. Feedforward Loop Filter
 [<img src="doc/fig/dsm_block_diag.png" width="600"/>](doc/fig/dsm_block_diag.png)
 
 **Figure 3**: Block diagram of a DSM with feedback (blue) and feedforward coefficients (red). 
 
+This 4th-order CT-DSM may be either implemented by a feedback (FB), or a feedforward (FF) structure. The block diagram, which depicts both structures is shown in Fig. 3. The corresponding state-space description is:
+
+$
+\mathbf{ABCD}=\begin{bmatrix}
+		\begin{array}{c|c}
+			\mathbf{A} & \mathbf{B}\\
+			\hline
+			\mathbf{C} & \mathbf{D}
+		\end{array}
+	\end{bmatrix}=
+	\begin{bmatrix}
+		\begin{array}{cccc|cc}
+			0 & 0 & 0 & 0 & b_{11} & b_{12}\\
+			a_{21} & 0 & 0 & 0 & 0 & b_{22}\\
+			0 & a_{32} & 0 & 0 & 0 & b_{32}\\
+			0 & 0 & a_{43} & 0 & 0 & b_{42}\\
+			\hline
+			c_1 & c_2 & c_3 & c_4 & 0 & 0
+		\end{array}
+	\end{bmatrix}
+$
+
+In the case of a FB modulator (blue coefficients), the ∆Σ toolbox gave the following set of coefficients:
+
+$
+    \mathbf{ABCD}_\textrm{FB}=
+	\begin{bmatrix}
+		\begin{array}{cccc|cc}
+			0 & 0 & 0 & 0 & 0.00614 & -0.00614\\
+			1 & 0 & 0 & 0 & 0 & -0.05550\\
+			0 & 1 & 0 & 0 & 0 & -0.24946\\
+			0 & 0 & 1 & 0 & 0 & -0.67129\\
+			\hline
+			0 & 0 & 0 & 1 & 0 & 0
+		\end{array}
+	\end{bmatrix}
+$
+
+However, the output of the integrators $x_i$ (Fig. 3) must be scaled to fit within the supply voltage, as shown in Fig. 4. 
+
 [<img src="doc/fig/modStatesScaled.png" width="600"/>](doc/fig/modStatesScaled.png)
 
 **Figure 4**: Internal states of the CIFB CT-DSM after dynamic range scaling, given an input tone with the maximum stable amplitude (MSA). 
+
+However, the 2-bit output sequence $v(t)$ of the quantizer (see Fig. 3 and 4) must be observed in the frequency domain to evaluate the performance (SQNR) of the modulator, as shown in Fig. 5.
 
 [<img src="doc/fig/psdCtAvg.png" width="600"/>](doc/fig/psdCtAvg.png)
 
@@ -49,17 +115,17 @@ This case study was performed in the context of a master thesis, and will be pub
  | Technology $(\mathrm{nm})$          | $130$    |$180$     | $110$      |
  | Open Source Technology              | yes      |no        | no      |
  | Supply $(\mathrm{V})$               | $1.8$    |$1.2$     | $1.0$   |
- | Input Signal Range $(\mathrm{mVpp})$|$\pm 300$ |$\pm 100$ | $\pm 150$|
+ | Input Signal Range $(\mathrm{mV}_\mathrm{pp})$|$\pm 300$ |$\pm 100$ | $\pm 150$|
  | Target SNR $(\mathrm{dB})$          | $130$        |$80$     | $80$         | 
  | OSR                                 | $256$       |$2048$     |$64$        | 
  | Quantizer Type                      |Flash    |Time-based     |Time-based       |
  | Quantizer Bits                      |$1$    |$5$     |$4$        |
  | Noise-Shaping Order                 |$4$    |$1$     |$2$      |
- | Total Input Noise $(µ\mathrm{V}_\mathrm{rms})$  |$3.9$   |$1.3$     |$9.5$ |
+ | Total Input Noise $(\mu\mathrm{V}_\mathrm{rms})$  |$3.9$   |$1.3$     |$9.5$ |
  | Eq. Input Noise Density $^a$ $(\mathrm{V}/\sqrt{\mathrm{Hz}})$ |$345$|$92$| $95$ |  
- | Aux. Amp. W/L Input Pair $(µ\mathrm{m}/µ\mathrm{m})$    |$500/10$ |-|$250/1.6$  |
- | Aux. Amp. W/L Casc. CS $^b$ $(µ\mathrm{m}/µ\mathrm{m})$  |$40/80$ |-|$12/24$     |
- | Power Consumption Input $G_\mathrm{m}$ $(µ\mathrm{W})$  |$8.8^c$ |$2.4$ |$4.2$       |
+ | Aux. Amp. W/L Input Pair $(\mu\mathrm{m}/\mu\mathrm{m})$    |$500/10$ |-|$250/1.6$  |
+ | Aux. Amp. W/L Casc. CS $^b$ $(\mu\mathrm{m}/\mu\mathrm{m})$  |$40/80$ |-|$12/24$     |
+ | Power Consumption Input $G_\mathrm{m}$ $(\mu\mathrm{W})$  |$8.8^c$ |$2.4$ |$4.2$       |
 
 $^a$ Equivalent white noise spectral density based on parameters “BW” and “Total Input Noise”.
 
