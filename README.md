@@ -49,37 +49,11 @@ Given the fixed OSR and a simple flash quantizer, a 4th-order DSM is necessary, 
 This 4th-order CT-DSM may be either implemented by a feedback (FB), or a feedforward (FF) structure. 
 The block diagram, which depicts both structures is shown in Fig. 3. The corresponding state-space description is:
 
-$\mathbf{ABCD}=\begin{bmatrix}
-		\begin{array}{c|c}
-			\mathbf{A} & \mathbf{B}\\
-			\hline
-			\mathbf{C} & \mathbf{D}
-		\end{array}
-	\end{bmatrix}=
-	\begin{bmatrix}
-		\begin{array}{cccc|cc}
-			0 & 0 & 0 & 0 & b_{11} & b_{12}\\
-			a_{21} & 0 & 0 & 0 & 0 & b_{22}\\
-			0 & a_{32} & 0 & 0 & 0 & b_{32}\\
-			0 & 0 & a_{43} & 0 & 0 & b_{42}\\
-			\hline
-			c_1 & c_2 & c_3 & c_4 & 0 & 0
-		\end{array}
-	\end{bmatrix}$
+[<img src="doc/fig/abcd_mat.png" width="400"/>](doc/fig/abcd_mat.png)
 
 In the case of a FB modulator (blue coefficients), the ∆Σ toolbox gave the following set of coefficients:
 
-$\mathbf{ABCD}_\textrm{FB}=
-	\begin{bmatrix}
-		\begin{array}{cccc|cc}
-			0 & 0 & 0 & 0 & 0.00614 & -0.00614\\
-			1 & 0 & 0 & 0 & 0 & -0.05550\\
-			0 & 1 & 0 & 0 & 0 & -0.24946\\
-			0 & 0 & 1 & 0 & 0 & -0.67129\\
-			\hline
-			0 & 0 & 0 & 1 & 0 & 0
-		\end{array}
-	\end{bmatrix}$
+[<img src="doc/fig/abcd_fb_mat.png" width="400"/>](doc/fig/abcd_fb_mat.png)
 
 However, the output of the integrators $x_i$ (Fig. 3) must be scaled to fit within the supply voltage, as shown in Fig. 4. 
 
@@ -94,7 +68,7 @@ However, the 2-bit output sequence $v(t)$ of the quantizer (see Fig. 3 and 4) mu
 **Figure 5**: PSD of the output of the modulator $v(t)$.
 
 # Front-End 
-The most important result from system-level simulations is the need for a third-order distortion ratio $(\mathrm{HD}_3)$ of $<-90~\mathrm{dB}$.
+The most important result from system-level simulations is the need for a third-order distortion ratio $(\mathrm{HD_3})$ of $<-90~\mathrm{dB}$.
 Since no noise shaping is present at the first stage, the front-end transconductor must fulfill this requirement along with the noise, input voltage range and input impedance specifications from above. All these specifications lead to a source-degenerated differential pair with auxiliary amplifiers (Fig. 7) at both inputs, to increase the $g_\mathrm{m}$ of the transistors $M_1$, see Fig. 6. Since the power consumption is inherently linked with the linear input voltage range of this circuit, the so-called ''Feedback Assisted $G_\mathrm{m}$ Linearization'' proposed by [4] is a crucial part of this circuit. 
 The concept of this technique is to facilitate the virtual ground nodes of the aux. amplifiers as summation points (current-domain) of the feedback signal. This allows to ideally cancel the signal current across the degeneration resistors $R_\mathrm{s}$. Consequently, the bias current $I_0$ may be reduced. 
 
