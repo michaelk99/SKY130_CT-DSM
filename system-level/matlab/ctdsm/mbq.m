@@ -20,8 +20,15 @@
 % All other DAC elements should have a value of -1
 
 function [q_out, index] = mbq(in, nr_levels, vref)
-    M = nr_levels-1;
-    index = double(uencode(in, log2(nr_levels), vref, "unsigned"));
-    q_out = (index-M./2);
-    q_out = q_out./M*2;
+    if nr_levels == 2
+        index = double((in>=0));
+        q_out = 2*index-1;
+    elseif nr_levels == 3
+    % TBD
+    elseif nr_levels > 3
+        M = nr_levels-1;
+        index = double(uencode(in, log2(nr_levels), vref, "unsigned"));
+        q_out = (index-M./2);
+        q_out = q_out./M*2;
+    end
 end
