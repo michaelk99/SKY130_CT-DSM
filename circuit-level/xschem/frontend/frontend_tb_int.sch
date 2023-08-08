@@ -132,9 +132,9 @@ lab=voutp}
 N 190 330 190 360 {
 lab=voutn}
 N 190 10 190 40 {
-lab=GND}
+lab=vcmo}
 N 190 420 190 450 {
-lab=GND}
+lab=vcmo}
 N -30 150 -30 170 {
 lab=#net1}
 N -30 290 -30 310 {
@@ -169,11 +169,7 @@ N -260 330 100 330 {
 lab=#net2}
 N -680 270 -680 470 {
 lab=vin}
-N -680 270 -500 270 {
-lab=vin}
 N -680 70 -680 190 {
-lab=vip}
-N -680 190 -500 190 {
 lab=vip}
 N -130 290 -130 310 {
 lab=vcm_act}
@@ -193,6 +189,14 @@ N 340 160 390 160 {
 lab=vcmo}
 N 390 160 390 170 {
 lab=vcmo}
+N -680 190 -610 190 {
+lab=vip}
+N -550 190 -500 190 {
+lab=#net12}
+N -680 270 -610 270 {
+lab=vin}
+N -550 270 -500 270 {
+lab=#net13}
 C {devices/vsource.sym} -1200 10 0 0 {name=V1 value=1.8
 }
 C {devices/gnd.sym} -1200 70 0 0 {name=l1 lab=GND}
@@ -222,7 +226,7 @@ value="
 save all
 
 let f_sig = 32
-let f_min = 0.1
+let f_min = 0.01
 let f_max = 128
 let tper_sig = 1/f_sig
 let tfr_sig = tper_sig/2
@@ -280,17 +284,23 @@ option numdgt=5
 	plot vdb(A) 180/PI*cphase(A)
 	plot vdb(Gm)
 
+	let i_in_p = viinp#branch
+	let i_in_n = viinn#branch
+	let zin = abs((v(vip)-v(vin))/((i_in_p-i_in_n)))
+
+	plot vdb(zin)
+
 	setplot tran1
 	let vid = v(vid)
 	let iod = (viop#branch-vion#branch)
-	let vc = v(voutp)-v(voutn)
+	let vout = v(voutp)-v(voutn)
 	let ioc = @c1[i]
 	meas tran iod_max max iod
 	meas tran ioc_max max ioc
 	meas tran vid_max max vid
 	let gm = iod_max/vid_max
 	let gm_c = ioc_max/vid_max
-	plot vid vc
+	plot vid vout
 	plot iod ioc
 	
 
@@ -299,17 +309,17 @@ option numdgt=5
 
 	** FFT
 	
-	linearize vc
+	linearize vout
 	set specwindow=hanning
-	fft vc
+	fft vout
 	setplot sp2
 
-	let N = length(vc)
+	let N = length(vout)
 	let fres = frequency[n-1]/n
 	let fmin_idx = ceil(const.f_min/fres)
 	let fmax_idx = ceil(const.f_max/fres)
 
-	let iod_spec = mag(vc)
+	let iod_spec = mag(vout)
 	let iod_spec_slice = iod_spec[fmin_idx,fmax_idx]
 	let freq = frequency[fmin_idx,fmax_idx]
 	meas sp iod_max max iod_spec_slice
@@ -377,12 +387,12 @@ value=70p
 footprint=1206
 device="ceramic capacitor"}
 C {devices/res.sym} 310 160 3 0 {name=R1
-value=2.33Meg
+value=100k
 footprint=1206
 device=resistor
 m=1}
 C {devices/res.sym} 310 300 3 0 {name=R2
-value=2.33Meg
+value=100k
 footprint=1206
 device=resistor
 m=1}
@@ -392,8 +402,12 @@ m=1
 value=70p
 footprint=1206
 device="ceramic capacitor"}
-C {devices/gnd.sym} 190 450 0 0 {name=l24 lab=GND}
-C {devices/gnd.sym} 190 10 2 0 {name=l25 lab=GND}
 C {/foss/designs/frontend/frontend_main.sym} -480 230 0 0 {name=x1}
 C {/foss/designs/frontend/frontend_cmfb_ideal.sym} -30 230 0 0 {name=x2 ACM=-10}
 C {devices/lab_pin.sym} -160 310 0 0 {name=p2 sig_type=std_logic lab=vcm_act}
+C {devices/vsource.sym} -580 190 3 0 {name=VIINP value=0
+}
+C {devices/vsource.sym} -580 270 3 0 {name=VIINN value=0
+}
+C {devices/lab_pin.sym} 190 10 0 1 {name=l10 sig_type=std_logic lab=vcmo}
+C {devices/lab_pin.sym} 190 450 0 1 {name=l22 sig_type=std_logic lab=vcmo}
