@@ -184,13 +184,17 @@ N 220 -750 220 -720 {
 lab=GND}
 N 220 -850 220 -810 {
 lab=vddcmfb}
-N 600 -520 680 -520 {
-lab=vin}
-N 600 -600 680 -600 {
-lab=vip}
 N 740 -600 780 -600 {
-lab=#net10}
+lab=vipp}
 N 740 -520 780 -520 {
+lab=vinn}
+N 600 -600 610 -600 {
+lab=vip}
+N 600 -520 610 -520 {
+lab=vin}
+N 670 -600 680 -600 {
+lab=#net10}
+N 670 -520 680 -520 {
 lab=#net11}
 C {devices/vsource.sym} 80 -780 0 0 {name=V1 value=1.8
 }
@@ -251,6 +255,11 @@ option numdgt=5
 	alter @VINDC[DC] = 0
 	noise v(vout) VIN dec 100 0.01 100k 1
 	noise v(vout) VIN dec 10 0.01 128
+	alter @rinp[resistance] = 10G
+	alter @rinn[resistance] = 10G
+	alter @VIN[SIN] = [ 0 0.1 128 0 0 0 ]
+	alter @VINDC[DC] = 0
+	tran $&tstep $&tstop $&tstart
 
 	setplot noise1
 	let acgain = onoise_spectrum/inoise_spectrum
@@ -282,7 +291,8 @@ option numdgt=5
 
 	let i_in_p = viinp#branch
 	let i_in_n = viinn#branch
-	let zin = abs((v(vip)-v(vin))/((i_in_p-i_in_n)))
+	let zin = abs((v(vip)-v(vin))/(2*(i_in_p-i_in_n)))
+	meas ac zin_fmax find zin when frequency=128
 
 	plot vdb(zin)
 	
@@ -311,7 +321,7 @@ option numdgt=5
 	linearize iod
 	set specwindow=hanning
 	fft iod
-	setplot sp2
+	setplot sp5
 
 	let N = length(iod)
 	let fres = frequency[n-1]/n
@@ -339,6 +349,13 @@ option numdgt=5
 	setscale freq
 	wrdata $fnspec iod_spec_db 
 	*wrdata $fnhd hd3[0] hd3_db[0] hd2[0] hd2_db[0] fres n
+
+	** Input Impedance
+	setplot tran4
+	let vrinn = v(vin,vinn)
+	let vrinp = v(vip,vipp)
+	
+	plot vrinp vrinn 25m
 
 alter @VIN[DC] = 0
 op
@@ -416,7 +433,19 @@ descr="gm_Id"}
 C {devices/ngspice_get_expr.sym} 1970 -600 0 0 {name=r9 node="[format %.3g [expr [ngspice::get_node \\\{gmId_tail\\\}] ]]"
 descr="gm_Id"}
 C {devices/title.sym} 160 -40 0 0 {name=l22 author="Michael Koefinger"}
-C {devices/vsource.sym} 710 -600 3 0 {name=VIINP value=0
+C {devices/res.sym} 710 -600 3 0 {name=RINP
+value=0
+footprint=1206
+device=resistor
+m=1}
+C {devices/res.sym} 710 -520 3 0 {name=RINN
+value=0
+footprint=1206
+device=resistor
+m=1}
+C {devices/lab_pin.sym} 760 -600 1 0 {name=p3 sig_type=std_logic lab=vipp}
+C {devices/lab_pin.sym} 760 -520 3 0 {name=p4 sig_type=std_logic lab=vinn}
+C {devices/vsource.sym} 640 -600 3 0 {name=VIINP value=0
 }
-C {devices/vsource.sym} 710 -520 3 0 {name=VIINN value=0
+C {devices/vsource.sym} 640 -520 3 0 {name=VIINN value=0
 }
