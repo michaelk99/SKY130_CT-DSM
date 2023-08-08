@@ -158,12 +158,8 @@ N 900 -830 900 -670 {
 lab=#net3}
 N 920 -850 920 -670 {
 lab=#net4}
-N 600 -520 780 -520 {
-lab=vin}
 N 600 -520 600 -320 {
 lab=vin}
-N 600 -600 780 -600 {
-lab=vip}
 N 600 -720 600 -600 {
 lab=vip}
 N 860 -450 860 -410 {
@@ -188,6 +184,14 @@ N 220 -750 220 -720 {
 lab=GND}
 N 220 -850 220 -810 {
 lab=vddcmfb}
+N 600 -520 680 -520 {
+lab=vin}
+N 600 -600 680 -600 {
+lab=vip}
+N 740 -600 780 -600 {
+lab=#net10}
+N 740 -520 780 -520 {
+lab=#net11}
 C {devices/vsource.sym} 80 -780 0 0 {name=V1 value=1.8
 }
 C {devices/gnd.sym} 80 -720 0 0 {name=l1 lab=GND}
@@ -245,8 +249,8 @@ option numdgt=5
 	alter @VINDC[DC] = 0.25
 	tran $&tstep $&tstop $&tstart
 	alter @VINDC[DC] = 0
-	noise v(vout) VIN dec 100 0.1 100k 1
-	noise v(vout) VIN dec 10 0.1 128
+	noise v(vout) VIN dec 100 0.01 100k 1
+	noise v(vout) VIN dec 10 0.01 128
 
 	setplot noise1
 	let acgain = onoise_spectrum/inoise_spectrum
@@ -275,6 +279,12 @@ option numdgt=5
 	setplot ac1
 	let A = v(vout)/v(vin)
 	plot vdb(A) 180/PI*phase(A)
+
+	let i_in_p = viinp#branch
+	let i_in_n = viinn#branch
+	let zin = abs((v(vip)-v(vin))/((i_in_p-i_in_n)))
+
+	plot vdb(zin)
 	
 	setplot dc1
 	let vid = v(vid)	
@@ -406,3 +416,7 @@ descr="gm_Id"}
 C {devices/ngspice_get_expr.sym} 1970 -600 0 0 {name=r9 node="[format %.3g [expr [ngspice::get_node \\\{gmId_tail\\\}] ]]"
 descr="gm_Id"}
 C {devices/title.sym} 160 -40 0 0 {name=l22 author="Michael Koefinger"}
+C {devices/vsource.sym} 710 -600 3 0 {name=VIINP value=0
+}
+C {devices/vsource.sym} 710 -520 3 0 {name=VIINN value=0
+}
