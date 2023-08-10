@@ -36,7 +36,7 @@ ampl_dB     = -4.4;                    % in dBFS MSA
 amplitude   = Vref*10.^(ampl_dB/20);    % denormalize to output full scale of quantizer
 offset      = 0;
 OSR         = fs/2/fb;
-noiseVec_rms = [1e-6, 30e-6, 200e-6, 300e-6]; 
+noiseVec_rms = [1e-6, 47e-6, 300e-6, 600e-6]; 
 ft1         = fs;
 ft2         = fs;
 ft3         = fs;
@@ -45,7 +45,7 @@ omCoeff     = 0.9.*[ft1 ft2 ft3 ft4];                            % Unity gain fr
 a1          = -1;                                               % DAC Feedback
 b1          = 1;                                                % Input 
 cCoeff      = [0.67129148 0.24945876 0.05549743 0.00614178];    % Feedforward
-A0Vec       = [100 100 100 100];
+A0Vec       = [170 170 170 18];
 intOutMaxVec= [0.6 1 1 1];
 wLimVec     = 1000.*[1 1 1 1];
 eld         = 0;
@@ -56,7 +56,7 @@ finter      = 0;
 % Simulation
 % ************************************************************
 [y, fs, N, w1, w2, w3, w4, wsum, w1_in] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, 0, 50, omCoeff, cCoeff, Vref, A0Vec, 0, noiseVec_rms, wLimVec, [false false false false], false);
-plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], true)
+plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], false)
 [SNR, SNDR, IBN, V, NBW, dum, SNHD3R] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
 plotPSD(V, NBW, N, fres, fb, true);
 SNR
@@ -72,8 +72,8 @@ w3Max = max(abs(w3));
 w4Max = max(abs(w4));
 
 % Only scale outputs of 3rd and 4th stage
-alpha1 = 1;%intOutMaxVec(1)/w1Max;
-alpha2 = 1;%intOutMaxVec(2)/w2Max;
+alpha1 = intOutMaxVec(1)/w1Max;
+alpha2 = intOutMaxVec(2)/w2Max;
 alpha3 = intOutMaxVec(3)/w3Max;
 alpha4 = intOutMaxVec(4)/w4Max;
 %%
@@ -91,10 +91,10 @@ s1 = omCoeff(1)*alpha1;
 % ************************************************************
 % cCoeffScaled = [c1s c2s c3s c4s];           
 % cCoeffScaled = [0.6713 0.2495 0.1883 0.226];   % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
-cCoeffScaled = [0.6713 0.2495 0.327 0.378];   % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
+cCoeffScaled = [1.2078 0.4762 0.3265 0.378];   % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
 % omCoeffScaled = [s1 s2 s3 s4];                
 % omCoeffScaled = [5.89 5.89 1.74 0.543].*1e4;    % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
-omCoeffScaled = [5.89 5.89 1.00 0.564].*1e4;    % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
+omCoeffScaled = [3.28 5.56 1.91 0.564].*1e4;    % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
 wLimVec = 2.*intOutMaxVec;
 
 %% save
@@ -103,9 +103,9 @@ cCoeffScaled = [0.6713 0.2495 0.129 0.179];   % 1bit Quant Vref = 0.36, 0.3 0.5 
 % omCoeffScaled = [s1 s2 s3 s4];                
 omCoeffScaled = [5.24 5.24 2.26 0.418].*1e4;    % 1bit Quant Vref = 0.36, 0.3 0.5 1 1 max swing
 %%
-noiseEnVec = [true false false false];
-noiseVec_rms(1) = 0.01e-6;
-[y, fs, N, w1, w2, w3, w4, wsum, w1_in] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, 0, 50, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseEnVec, false);
+noiseEnVec = [true true true true];
+%noiseVec_rms(1) = 0.01e-6;
+[y, fs, N, w1, w2, w3, w4, wsum, w1_in] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, 0, 50, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseEnVec, true);
 plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], true)
 [SNR, SNDR, IBN, V, NBW, dum, SNHD3R, dum2, dum3, IBNcum] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
 kq_sim = dot(y,downsample(w4,ctSteps))./dot(downsample(w4,ctSteps),downsample(w4,ctSteps));
@@ -123,12 +123,13 @@ p_noise = 10.^(IBN/10);
 SNR_calc = 10*log10(p_sig/p_noise)
 %% ****************************************
 % Sweep input ampl to get MSA - for scaled modulator
-% w/o noise, leaky int., 2nd pole, asymm. DAC
+% w/ noise, leaky int.
 % MSA = -1.22 dBVref (360mV) --> 0.26V
 % ****************************************
 amplVecdB1 = [-160 -140 -120 -100 -80 -60 -40 -20 -15 -10 -9 -8 -7 -6];
-amplVecdB2 = -5:0.2:-3.4;
+amplVecdB2 = -5:0.2:-1;
 amplVecdB = [amplVecdB1 amplVecdB2];
+amplVecdB = -3.2:0.2:-1;
 amplVec = Vref.*10.^(amplVecdB./20);
 SNRVec = zeros(length(amplVec),1);
 SNDRVec = SNRVec;
@@ -137,7 +138,7 @@ nofruns = length(amplVec);
 for i=1:nofruns
     txt = sprintf("Run %d/%d", i, nofruns);
     disp(txt)
-    [y, fs, N] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplVec(i), offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, [false false false false], false);
+    [y, fs, N] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplVec(i), offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, [true true true true], true);
     [SNRVec(i), SNDRVec(i)] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
 end
 
@@ -158,7 +159,7 @@ hold off;
 Input = amplVecdB';
 SQNR = SNRVec;
 T1 = table(Input, SQNR);
-writetable(T1, 'SQNR_vs_input_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
+writetable(T1, 'SNR_vs_input_FF_1bit_ext.txt', 'Delimiter', ' ','WriteRowNames',false);
 
 %% ****************************************
 % Sweep fin to get worst input frequency
@@ -176,26 +177,6 @@ plot(finVec, SNRVec, 'ro-', 'LineWidth', 2);
 ylabel("SQNR [dB]", "Fontsize",14);
 xlabel("fin [Hz]", "Fontsize", 14);
 title("SQNR vs. Input Frequency", "Fontsize", 16);
-set(gca,'FontSize',14)
-grid on;
-
-%% ****************************************
-% Sweep DC Gain of all leaky integrators at the same time
-%
-% ****************************************
-A0_dB = 10:5:40;
-A0_Vec = 10.^(A0_dB./20);
-SNRVec = zeros(length(A0_Vec),1);
-for i=1:length(A0_Vec)
-   [y, fs, N] = simDSM4CT_FF_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0_Vec(i).*[1 1 1 1], 0, noiseVec_rms, wLimVec, [false false false false], true);
-   SNRVec(i) = calcPSDParam(y, N, fs, fb, fin, fres, FS);
-end
-
-figure;
-plot(A0_dB, SNRVec, 'ro-', 'LineWidth', 2);
-ylabel("SQNR [dB]", "Fontsize",14);
-xlabel("A0 [dB]", "Fontsize", 14);
-title("SQNR vs. Integrator DC Gain", "Fontsize", 16);
 set(gca,'FontSize',14)
 grid on;
 
@@ -309,19 +290,19 @@ writetable(T1, 'modSNRvsGBW_wo_noise_FF.txt', 'Delimiter', ' ','WriteRowNames',f
 noise1_rms_calc = amplitude/sqrt(2)/10.^(130/20)*sqrt(OSR);
 % noise4rmsVec = linspace(100e-6, 200e-6, 50);
 % noise1rmsVec = linspace(0.1e-6, 2e-6, 50);
-% noise2rmsVec = linspace(5e-6, 100e-6, 10);
-noise3rmsVec = linspace(10e-6, 50e-3, 20);
-%noise4rmsVec = linspace(150e-6, 300e-6, 40);
-enableVec = [true true true false];
-nofruns = length(noise3rmsVec);
+% noise2rmsVec = linspace(5e-6, 100e-6, 30);
+% noise3rmsVec = linspace(10e-6, 1e-3, 40);
+% noise4rmsVec = linspace(0.8e-3, 5e-3, 40);
+enableVec = [true true false false];
+nofruns = length(noise2rmsVec);
 SNRVec = zeros(nofruns,1);
 for i=1:nofruns
     txt = sprintf("Run %d/%d", i, nofruns);
     disp(txt)
     noiseVec_rms(1) = 1e-6;%noise1rmsVec(i);
     noiseVec_rms(2) = 47e-6;%noise2rmsVec(i);
-    noiseVec_rms(3) = noise3rmsVec(i);
-    noiseVec_rms(4) = 300e-6;%noise4rmsVec(i);
+    noiseVec_rms(3) = 500e-6;%noise3rmsVec(i);
+    noiseVec_rms(4) = 500e-6;%noise4rmsVec(i);
     [y, fs, N] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, enableVec, true);
     SNRVec(i) = calcPSDParam(y, N, fs, fb, fin, fres, FS);
     disp(SNRVec(i))
@@ -329,7 +310,7 @@ for i=1:nofruns
 end
 
 figure;
-plot(noise3rmsVec, SNRVec, 'k', 'LineWidth', 2)
+plot(noise2rmsVec, SNRVec, 'k', 'LineWidth', 2)
 ylabel("SNR in dB", "Fontsize",14);
 xlabel("Noise RMS", "Fontsize", 14);
 set(gca,'FontSize',14)
@@ -358,29 +339,54 @@ writetable(T1, 'modSNRvsNoise4_FF.txt', 'Delimiter', ' ','WriteRowNames',false);
 
 %% ****************************************
 % Simulate SQNR with nom. signal amplitude and max. DC offset
-% w/o Thermal noise, w/ limited Integrator DC Gain
+% w/ Thermal noise, w/ limited Integrator DC Gain
 % ****************************************
-amplitude = 5e-6;
+amplitude = 10e-6;
 offset = 0.25;
 vsignal_rms = amplitude/sqrt(2);
-noiseVec_enable = [false false false false];
-[y, fs, N, w1, w2, w3, w4, wsum] = simDSM4CT_FF_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseVec_enable, true);
+noiseVec_enable = [true true true true];
+[y, fs, N, w1, w2, w3, w4, wsum] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseVec_enable, true);
 plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], true)
 [SNR, SNDR, IBN, V, NBW, dum, SNHD3R] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
 plotPSD(V, NBW, N, fres, fb, true);
-vqnoise_rms = 10.^(IBN/20);
-SNR_calc = 20.*log10(vsignal_rms/vqnoise_rms);
+[f,p] = logsmooth(V,fin/fres);
 
 %%
 f = (f.*fs+fres)';
 Savg = p';
 T3 = table(f, Savg);
-writetable(T3, 'psdCtAvgMaxDCNomAmpl.txt', 'Delimiter', ' ','WriteRowNames',false);
+writetable(T3, 'psdCtAvgMaxDCNomAmpl_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
+% f = downsample(f_band', 6);
+% IbnCum = 10*log10(downsample(IBNcum,6));
+% T4 = table(f, IbnCum);
+% writetable(T4, 'psdCtIBNMaxDCNomAmpl_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
+
+%% ****************************************
+% Simulate SQNR with nom. signal amplitude and max. DC offset and 50Hz
+% Interf.
+% w/ Thermal noise, w/ limited Integrator DC Gain
+% ****************************************
+amplitude = 10e-6;
+offset = 0.25;
+vsignal_rms = amplitude/sqrt(2);
+interferer_ampl = 10e-3;
+finter = 50;
+noiseVec_enable = [true true true true];
+[y, fs, N, w1, w2, w3, w4, wsum] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseVec_enable, true);
+plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], true)
+[SNR, SNDR, IBN, V, NBW, dum, SNHD3R] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
+plotPSD(V, NBW, N, fres, fb, true);
+[f,p] = logsmooth(V,fin/fres);
+
+%%
+f = (f.*fs+fres)';
+Savg = p';
+T3 = table(f, Savg);
+writetable(T3, 'psdCtAvgMaxDCNomAmplInterf_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
 f = downsample(f_band', 6);
 IbnCum = 10*log10(downsample(IBNcum,6));
 T4 = table(f, IbnCum);
-writetable(T4, 'psdCtIBNMaxDCNomAmpl.txt', 'Delimiter', ' ','WriteRowNames',false);
-
+writetable(T4, 'psdCtIBNMaxDCNomAmplInterf_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
 %% ****************************************
 % Verify OBG (Out of Band Gain of NTF)
 % ****************************************
@@ -398,9 +404,9 @@ fres = 1/64;
 amplitude = 10e-3;
 offset = 0.25;
 vsignal_rms = amplitude/sqrt(2);
-noiseVec_rms = [1e-6, 30e-6, 200e-6, 300e-6]; 
+noiseVec_rms = [1e-6, 47e-6, 300e-6, 600e-6]; 
 noiseVec_enable = [true true true true];
-[y, fs, N, w1, w2, w3, w4, wsum, w1_in] = simDSM4CT_FF_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseVec_enable, true);
+[y, fs, N, w1, w2, w3, w4, wsum, w1_in] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, 0, noiseVec_rms, wLimVec, noiseVec_enable, true);
 plotInternalSignals(fs, fin, ctSteps, [w1_in; w1; w2; w3; w4], ["Input Int. 1", "Output Int. 1", "Output Int. 2", "Output Int. 3", "Output Int. 4"], true)
 [SNR, sndr, IBN, V, NBW, spwr, SNHD3R, fbin, nb, ibncum]= calcPSDParam(y, N, fs, fb, fin, fres, FS);
 plotPSD(V, NBW, N, fres, fb, true);
@@ -417,11 +423,11 @@ SNR_calc = 20.*log10(vsignal_rms/vqnoise_rms);
 f = (f.*fs+fres)';
 Savg = p';
 T3 = table(f, Savg);
-writetable(T3, 'psdCtAvgMaxDCMaxAmpl_FF.txt', 'Delimiter', ' ','WriteRowNames',false);
+writetable(T3, 'psdCtAvgMaxDCMaxAmpl_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
 f = downsample(f_band', 6);
-IbnCum = 10*log10(downsample(IBNcum,6));
+IbnCum = 10*log10(downsample(ibncum',6));
 T4 = table(f, IbnCum);
-writetable(T4, 'psdCtIBNMaxDCMaxAmpl_FF.txt', 'Delimiter', ' ','WriteRowNames',false);
+writetable(T4, 'psdCtIBNMaxDCMaxAmpl_FF_1bit.txt', 'Delimiter', ' ','WriteRowNames',false);
 
 %% ****************************************
 % Sweep third order non. lin. factor of first integrator input
@@ -446,7 +452,7 @@ HD3Vec = zeros(nofruns,1);
 for i=1:nofruns
     txt = sprintf("Run %d/%d", i, nofruns);
     disp(txt)
-    [y, fs, N] = simDSM4CT_FF_2bit_nonlin(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, g3Vec(i), noiseVec_enable, false);
+    [y, fs, N] = simDSM4CT_FF_1bit_nonlin(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, cCoeffScaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, g3Vec(i), noiseVec_enable, false);
     [SNRVec(i), sndr, ibn, V, NBW, spwr, SNHD3RVec(i), fbin, nb, ibncum, HD3Vec(i), hd3pwr] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
     disp(HD3Vec(i));
     %clear y
