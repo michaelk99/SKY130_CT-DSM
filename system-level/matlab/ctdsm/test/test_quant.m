@@ -61,9 +61,11 @@ in = vref.*sin(2*pi*(fin/fs)*[1:N]);
  
 figure;
 plot(in,out)
+title('mbq() Test - Sine Input - Vector')
 grid on;
 figure;
 plot(in, thermo)
+title('mbq() Test - Sine Input - Thermocode - Vector')
 grid on;
 
 out2 = zeros(1,length(in));
@@ -75,9 +77,11 @@ end
 figure;
 plot(in,out2)
 grid on;
+title('mbq() Test - Sine Input - Elementwise')
 figure;
 plot(in, thermo2)
 grid on;
+title('mbq() Test - Sine Input - Elementwise')
 %% Test ADC - DAC combo
 elements = ones(1,nlev-1);
 out_dac = zeros(1,length(thermo));
@@ -92,4 +96,5 @@ plot(in, out_dac);
 hold on;
 % plot(in, out);
 % plot(in, in-out_dac)
+title('ADC-DAC Cascade TF')
 grid on;
