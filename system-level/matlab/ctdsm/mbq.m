@@ -29,6 +29,6 @@ function [q_out, index] = mbq(in, nr_levels, vref)
         M = nr_levels-1;
         index = double(uencode(in, log2(nr_levels), vref, "unsigned"));
         q_out = (index-M./2);
-        q_out = q_out./M*2;
+%         q_out = q_out./M*2;
     end
 end
