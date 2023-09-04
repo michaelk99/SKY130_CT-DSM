@@ -33,9 +33,13 @@ fres        = 1/64;   % FFT resolution in Hz --> N=2^22
 fin         = 18;  % input frequency in Hz
 fs          = 2^16;   % in Hz
 VDD         = 1.8;
-VinFS       = VDD*2/5;% 640e-3; %520e-3 ... from original spec
+nlev        = 4;
+VinFS       = VDD*2/5;                  % Quantizer Input full scale
 Vref        = VinFS/2;
-FS          = 2;      % Quantized output full scale of the quantizer
+Vlsb        = VinFS/nlev;
+FSdig       = VinFS/Vlsb;               % Quantizer output full scale
+LSBdig      = 1;                        % Vlsb/Vlsb
+FS          = FSdig-LSBdig;             % Max. value of digital sequence, req. for FFT scaling
 OSR         = fs/2/fb;
 
 %% ****************************************
@@ -43,9 +47,9 @@ OSR         = fs/2/fb;
 % ****************************************
 N = length(data);
 y = data';
-y_plt = ((data')-max(data)./2)/max(data)*2;
+y_plt = ((data')-max(data)./2);
 fres = fs/N;
-[SNR, SNDR, IBN, V, NBW, dum, SNHD3R, dum2, dum3, IBNcum] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
+[SNR, SNDR, IBN, V, NBW, dum, SNHD3R, dum2, dum3, IBNcum] = calcPSDParam(y_plt, N, fs, fb, fin, fres, FS);
 plotPSD(V, NBW, N, fres, fb, true);
 hold on;
 [f,p] = logsmooth(V,fin/fres);
