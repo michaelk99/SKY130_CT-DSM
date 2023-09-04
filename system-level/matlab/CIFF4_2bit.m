@@ -29,9 +29,13 @@ ctSteps     = 8;                        % number of oversampling steps per simul
 fin         = 25;                       % input frequency in Hz
 fs          = 2^16;                     % in Hz
 VDD         = 1.8;
+nlev        = 4;                        % Quantizer Levels
 VinFS       = VDD*2/5;                  % Quantizer Input full scale
 Vref        = VinFS/2;
-FS          = 2;                        % Quantizer output full scale
+Vlsb        = VinFS/nlev;
+FSdig       = VinFS/Vlsb;               % Quantizer output full scale
+LSBdig      = 1;                        % Vlsb/Vlsb
+FS          = FSdig-LSBdig;             % Max. value of digital sequence, req. for FFT scaling    
 ampl_dB     = -1.22;                    % in dBFS MSA
 amplitude   = Vref*10.^(ampl_dB/20);    % denormalize to output full scale of quantizer
 offset      = 0;
@@ -111,8 +115,9 @@ SNR
 SNDR
 IBN
 p_sig = (amplitude/sqrt(2)).^2;
-p_noise = 10.^(IBN/10);
+p_noise = (VinFS).^2/8*10.^(IBN/10);
 SNR_calc = 10*log10(p_sig/p_noise)
+vqnoise = VinFS/2/sqrt(2)*10.^(IBN/20)
 %% ****************************************
 % Sweep input ampl to get MSA - for scaled modulator
 % w/o noise, leaky int., 2nd pole, asymm. DAC
