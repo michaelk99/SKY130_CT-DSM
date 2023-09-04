@@ -29,14 +29,18 @@ ctSteps     = 8;                        % number of oversampling steps per simul
 fin         = 18;                       % input frequency in Hz
 fs          = 2^16;                     % in Hz
 VDD         = 1.8;
+nlev        = 4;                        % Quantizer Levels
 VinFS       = VDD*2/5;                  % Quantizer Input full scale
 Vref        = VinFS/2;
-FS          = 2;                        % Quantizer output full scale
+Vlsb        = VinFS/nlev;
+FSdig       = VinFS/Vlsb;               % Quantizer output full scale
+LSBdig      = 1;                        % Vlsb/Vlsb
+FS          = FSdig-LSBdig;             % Max. value of digital sequence, req. for FFT scaling           
 ampl_dB     = -1.225;                   % in dBVref MSA
 amplitude   = Vref*10.^(ampl_dB/20);    % denormalize to output full scale of quantizer
 offset      = 0;
 OSR         = fs/2/fb;
-noiseVec_rms = [1 19 150 150].*1e-6; 
+noiseVec_rms = [1 10 200 250].*1e-6; 
 ft1         = fs;
 ft2         = fs;
 ft3         = fs;
@@ -57,6 +61,7 @@ finter      = 0;
 [y, fs, N, w1, w2, w3, w4, w1_in, w2_in, w3_in, w4_in] = simDSM4CT_FB_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeff, aCoeff, b1, Vref, A0Vec, eld, noiseVec_rms, wLimVec, [false false false false], false);
 plotInternalSignals(fs, fin, ctSteps, [w1; w2; w3; w4], ["w1", "w2", "w3", "w4"], true);
 plotInternalSignals(fs, fin, ctSteps, [w1_in; w2_in; w3_in; w4_in], ["w1_in", "w2_in", "w3_in", "w4_in"], true);
+plotInternalSignals(fs, fin, ctSteps, [y], ["y"], true);
 [SNR, SNDR, IBN, V, NBW, dum, SNHD3R] = calcPSDParam(y, N, fs, fb, fin, fres, FS);
 plotPSD(V, NBW, N, fres, fb, true);
 SNR
@@ -106,10 +111,8 @@ wLimVec = 2.*intOutMaxVec;
 
 %%
 fres = 1/64;
-noiseEnVec = [true false false false];
-noiseVec_rms(1) = 0.01e-6;
-%noiseEnVec = [true true true true];
-%noiseVec_rms = [1e-6, 10e-6, 200e-6, 250e-6];
+noiseEnVec = [true true true true];
+noiseVec_rms = [1e-6, 10e-6, 200e-6, 250e-6];
 [y, fs, N, w1, w2, w3, w4, w1_in, w2_in, w3_in, w4_in] = simDSM4CT_FB_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, aCoeffScaled, b1Scaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, noiseEnVec, false);
 plotInternalSignals(fs, fin, ctSteps, [w1; w2; w3; w4], ["w1", "w2", "w3", "w4"], true);
 plotInternalSignals(fs, fin, ctSteps, [w1_in; w2_in; w3_in; w4_in], ["w1_in", "w2_in", "w3_in", "w4_in"], true);
@@ -125,8 +128,9 @@ SNR
 SNDR
 IBN
 p_sig = (amplitude/sqrt(2)).^2;
-p_noise = 10.^(IBN/10);
+p_noise = (VinFS).^2/8*10.^(IBN/10);
 SNR_calc = 10*log10(p_sig/p_noise)
+vqnoise = VinFS/2/sqrt(2)*10.^(IBN/20)
 %% Export Data for latex doc
 endIdx = ceil(ctSteps*fs/fin);
 t = downsample(((0:endIdx-1)./ctSteps/fs.*1e3)', 10);
@@ -514,7 +518,6 @@ plotPSD(P1./P2, NBW, N, fres, fb, false, false);
 % ****************************************
 fres = 1/64;
 amplitude = 10e-3;
-fin = 128;
 offset = 0.25;
 vsignal_rms = amplitude/sqrt(2);
 noiseVec_rms = [1e-6, 10e-6, 200e-6, 250e-6]; 
@@ -530,7 +533,7 @@ semilogx(f.*fs+fres,p);
 f_band = 0:fres:fb;
 semilogx(f_band, 10*log10(ibncum));
 
-vqnoise_rms = 10.^(IBN/20);
+vqnoise_rms = VinFS/2/sqrt(2)*10.^(IBN/20);
 SNR_calc = 20.*log10(vsignal_rms/vqnoise_rms);
 
 %%
@@ -539,7 +542,7 @@ Savg = p';
 T3 = table(f, Savg);
 writetable(T3, 'psdCtAvgMaxDCMaxAmpl.txt', 'Delimiter', ' ','WriteRowNames',false);
 f = downsample(f_band', 6);
-IbnCum = 10*log10(downsample(IBNcum,6));
+IbnCum = 10*log10(downsample(ibncum',6));
 T4 = table(f, IbnCum);
 writetable(T4, 'psdCtIBNMaxDCMaxAmpl.txt', 'Delimiter', ' ','WriteRowNames',false);
 
@@ -689,10 +692,10 @@ writetable(T1, 'modSNRvsELD_comp.txt', 'Delimiter', ' ','WriteRowNames',false);
 % *******
 % fres = 1/64;
 % ctSteps = 8;
-offset = 0.25;
-amplitude = 10e-3;
+% offset = 0.25;
+% amplitude = 10e-3;
 noiseEnVec = [true true true true];
-noiseVec_rms = [1e-6, 11e-6, 203e-6, 250e-6];
+noiseVec_rms = [1e-6, 10e-6, 200e-6, 250e-6];
 mismatch = 0;
 [y1, fs, N] = simDSM4CT_FB_2bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, interferer_ampl, finter, omCoeffScaled, aCoeffScaled, b1Scaled, Vref, A0Vec, eld, noiseVec_rms, wLimVec, noiseEnVec, false, mismatch, "None");
 mismatch = 0.1;
@@ -738,7 +741,7 @@ SavgRand = p3';
 SavgDWA = p4';
 T1 = table(f, SavgIdeal, SavgNone, SavgRand, SavgDWA);
 writetable(T1, 'psdCtAvgDACMismatchDCMax_10per.txt', 'Delimiter', ' ','WriteRowNames',false);
-f = downsample(f_band', 6);
+f = downsample(f_band, 6);
 IbnCumIdeal = 10*log10(downsample(IBNcum1,6));
 IbnCumNone = 10*log10(downsample(IBNcum2,6));
 IbnCumRand = 10*log10(downsample(IBNcum3,6));
@@ -779,6 +782,6 @@ Savg = p';
 T1 = table(f, Savg);
 writetable(T1, 'psdCtAvgMaxDCNomAmplInterf.txt', 'Delimiter', ' ','WriteRowNames',false);
 f = downsample(f_band', 6);
-IbnCum = 10*log10(downsample(ibncum,6));
+IbnCum = 10*log10(downsample(ibncum',6));
 T2 = table(f, IbnCum);
 writetable(T2, 'psdCtIBNMaxDCNomAmplInterf.txt', 'Delimiter', ' ','WriteRowNames',false);
