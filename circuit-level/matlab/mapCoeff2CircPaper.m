@@ -183,12 +183,40 @@ A_RC_FF_mmsq = A_RC_FF./1e-6
 %% Area Gain Boosters
 W1 = 500e-6;
 L1 = 10e-6;
+W2 = 8e-6;
+L2 = 10e-6;
 W3 = 40e-6;
+L3 = 80e-6;
+Wcn = 20e-6;
+Lcn = 1.5e-6;
+Wcp = 10e-6;
+Lcp = 3.5e-6;
+Acp = Wcp*Lcp;
+Acn = Wcn*Lcn;
+A2 = W2*L2;
+A34 = 2*4*W3*L3;
+A1 = W1*L1;
+Aauxamp = 2*(A1+A34+Acn+Acp)+A2;
+Aauxamp_mmsq = Aauxamp./1e-6
+
+%% Area Main Transconductor
+W1 = 10e-6;
+L1 = 1.5e-6;
+W2 = 30e-6;
+L2 = 20e-6;
+W3 = 10e-6;
 L3 = 80e-6;
 A34 = 2*4*W3*L3;
 A1 = W1*L1;
+A2 = W2*L2;
+A3 = W3*L3;
 
-Aest_mmsq = 2*(A1+A34)./1e-6
+Amain_gm = 2*A1+A2+2*A3;
+Amain_gm_mmsq = Amain_gm./1e-6
+
+%% Total Area Est.
+
+Atot_est_mmsq = (Amain_gm+Aauxamp+A_RC_FF)./1e-6
 
 %% Total Current Budgets per Stage, incl. CMFB
 Ibudget24 = [P24tot./2 P24tot./4 P24tot./4]./Vdd
