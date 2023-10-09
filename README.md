@@ -1,6 +1,6 @@
 # A Case Study of an Ultra-Low-Power Delta-Sigma ADC for Biosignal Acquisition
 Author: Michael Köfinger, 2023, Johannes Kepler University (JKU) Linz, Austria, Institute for Integrated Circuits (IIC).
-This case study was performed in the context of a master thesis and will be published on the [JKU ePUB repository](https://epub.jku.at/nav/classification/111078).
+This case study was performed in the context of a master thesis, which is published on the [JKU ePUB repository](https://epub.jku.at/obvulihs/content/titleinfo/9155811).
 
 # Abstract
 This thesis performs a case study on an ultra-low-power (ULP) Delta-Sigma analog-to-digital converter (DS-ADC) for biosignal acquisition utilizing the Institute for
