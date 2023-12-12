@@ -18,31 +18,17 @@ N -570 120 -500 120 {
 lab=vcmi}
 N -500 120 -500 150 {
 lab=vcmi}
-N -500 120 -430 120 {
-lab=vcmi}
-N -430 70 -430 120 {
-lab=vcmi}
 N -500 210 -500 240 {
 lab=GND}
 N -570 -10 -570 10 {
 lab=vip}
 N -590 -10 -570 -10 {
 lab=vip}
-N -430 -10 -430 10 {
-lab=vin}
-N -430 -10 -410 -10 {
-lab=vin}
 N -530 20 -500 20 {
-lab=vid}
-N -500 20 -470 20 {
 lab=vid}
 N -530 60 -530 80 {
 lab=GND}
 N -530 80 -500 80 {
-lab=GND}
-N -500 80 -470 80 {
-lab=GND}
-N -470 60 -470 80 {
 lab=GND}
 N -500 80 -500 90 {
 lab=GND}
@@ -95,14 +81,11 @@ C {devices/vsource.sym} -700 180 0 0 {name=V1 value=1.8
 C {devices/gnd.sym} -700 240 0 0 {name=l1 lab=GND}
 C {devices/vsource.sym} -500 180 0 0 {name=V2 value=0.25
 }
-C {devices/vcvs.sym} -430 40 0 0 {name=E1 value=-0.5}
-C {devices/vcvs.sym} -570 40 0 1 {name=E2 value=0.5}
+C {devices/vcvs.sym} -570 40 0 1 {name=E2 value=1}
 C {devices/vsource.sym} -500 50 0 0 {name=VIN value="0 AC 1"
 }
 C {devices/gnd.sym} -500 240 0 0 {name=l1 lab=GND}
 C {devices/lab_pin.sym} -590 -10 0 0 {name=l1 sig_type=std_logic lab=vip}
-C {devices/lab_pin.sym} -410 -10 0 1 {name=l1 sig_type=std_logic lab=vin
-}
 C {devices/lab_pin.sym} -570 120 0 0 {name=l5 sig_type=std_logic lab=vcmi}
 C {devices/launcher.sym} -270 440 0 0 {name=h1
 descr="Annotate OP"
