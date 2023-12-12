@@ -8,8 +8,9 @@ E {}
 T {M1-PMOS-svt} 60 190 0 0 0.4 0.4 {}
 T {PMOS Input Impedance Testbench} -260 -200 0 0 0.4 0.4 {}
 T {Model Zin as Cgs} 270 0 0 0 0.4 0.4 {}
-T {24GOhm@100kHz} -330 10 0 0 0.4 0.4 {}
-T {95MOhm@100kHz} 270 40 0 0 0.4 0.4 {}
+T {24GOhm@128Hz} -330 10 0 0 0.4 0.4 {}
+T {96MOhm@128Hz
+} 270 40 0 0 0.4 0.4 {}
 N -700 210 -700 240 {
 lab=GND}
 N -570 70 -570 120 {
@@ -135,12 +136,12 @@ alter @cgs[capacitance] = cgsm1
 setplot ac1
 let zin_m1 = abs(v(vip)/viinp1#branch)
 let zin_model = abs(v(vid)/viinp2#branch)
-meas ac zin_m1_fmax find zin_m1 when frequency=f_sig
-meas ac zin_model_fmax find zin_model when frequency=f_sig
+meas ac zin_m1_fsig find zin_m1 when frequency=f_sig
+meas ac zin_model_fsig find zin_model when frequency=f_sig
 plot vdb(zin_m1) vdb(zin_model)
 plot zin_m1 zin_model
 
-alter @rinp1[resistance] = zin_m1_fmax
+alter @rinp1[resistance] = zin_m1_fsig
 
 tran $&tstep $&tstop
 setplot tran1
@@ -153,6 +154,10 @@ let vref = vid/sqrt(2)
 	
 plot vrin_m1 vref_m1
 plot vrin_ref vref
+
+setplot ac1
+print zin_m1_fsig
+print zin_model_fsig
 	
 op
 
