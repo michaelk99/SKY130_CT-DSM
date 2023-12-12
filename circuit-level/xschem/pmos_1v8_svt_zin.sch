@@ -1,4 +1,4 @@
-v {xschem version=3.4.0 file_version=1.2
+v {xschem version=3.4.5 file_version=1.2
 }
 G {}
 K {}
@@ -7,9 +7,9 @@ S {}
 E {}
 T {M1-PMOS-svt} 60 190 0 0 0.4 0.4 {}
 T {PMOS Input Impedance Testbench} -260 -200 0 0 0.4 0.4 {}
-T {Model Zin as Cgs} 280 50 0 0 0.4 0.4 {}
-T {24GOhm} -200 50 0 0 0.4 0.4 {}
-T {95MOhm} 310 90 0 0 0.4 0.4 {}
+T {Model Zin as Cgs} 270 0 0 0 0.4 0.4 {}
+T {24GOhm@100kHz} -330 10 0 0 0.4 0.4 {}
+T {95MOhm@100kHz} 270 40 0 0 0.4 0.4 {}
 N -700 210 -700 240 {
 lab=GND}
 N -570 70 -570 120 {
@@ -128,6 +128,7 @@ save @m.xm1.msky130_fd_pr__pfet_01v8[gds]
 save @m.xm1.msky130_fd_pr__pfet_01v8[cgs]
 save @m.xm1.msky130_fd_pr__pfet_01v8[cgd]
 save @m.xm1.msky130_fd_pr__pfet_01v8[cgg]
+save @m.xm1.msky130_fd_pr__pfet_01v8[csg]
 
 let f_sig = 128
 alter @VIN[SIN] = [ 0 0.1 $&f_sig 0 0 0 ]
@@ -143,7 +144,7 @@ ac dec 100 0.1 1e5
 
 ** Expected Input Impedance based on Cgs
 setplot op1
-let cgsm1 = abs(@m.xm1.msky130_fd_pr__pfet_01v8[cgs])
+let cgsm1 = abs(@m.xm1.msky130_fd_pr__pfet_01v8[cgg])
 let zin_est = 1/(2*pi*const.f_sig*cgsm1)
 alter @rinp2[resistance] = zin_est
 alter @cgs[capacitance] = cgsm1
@@ -154,6 +155,7 @@ let zin_model = abs(v(vid)/viinp2#branch)
 meas ac zin_m1_fmax find zin_m1 when frequency=f_sig
 meas ac zin_model_fmax find zin_model when frequency=f_sig
 plot vdb(zin_m1) vdb(zin_model)
+plot zin_m1 zin_model
 
 alter @rinp1[resistance] = zin_m1_fmax
 
@@ -215,8 +217,8 @@ C {devices/ngspice_get_value.sym} 60 290 0 0 {name=r28 node=v(@m.xm1a.msky130_fd
 descr="vds"}
 C {devices/ngspice_get_expr.sym} 120 290 0 0 {name=r29 node="[format %.2g [expr [ngspice::get_voltage \\\{@m.xm1a.msky130_fd_pr__pfet_01v8[vgs]\\\}] - [ngspice::get_voltage \\\{@m.xm1a.msky130_fd_pr__pfet_01v8[vth]\\\}]]]"
 descr="vod"}
-C {devices/ngspice_get_value.sym} 170 260 0 0 {name=r34 node=@m.xm1.msky130_fd_pr__pfet_01v8[cgs]
-descr="cgs"}
+C {devices/ngspice_get_value.sym} 170 260 0 0 {name=r34 node=@m.xm1.msky130_fd_pr__pfet_01v8[csg]
+descr="csg"}
 C {devices/ngspice_get_value.sym} 170 290 0 0 {name=r30 node=@m.xm1.msky130_fd_pr__pfet_01v8[cgd]
 descr="cgd"}
 C {devices/res.sym} 360 150 3 0 {name=RINP2
