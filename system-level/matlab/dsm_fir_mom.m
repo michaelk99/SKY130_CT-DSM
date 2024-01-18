@@ -46,7 +46,7 @@ ntf_ss = ss(ntf_synth);
 [ABCD_ct, tdac2] = realizeNTF_ct(ntf_synth, 'FF');
 
 %% Modify coeff. for use with FIR DAC (Methods of Moments)
-ntaps = 5;
+ntaps = 10;
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct);
 c4_fir = Cc(4);
 c3_fir = Cc(3)+(Cc(4)*(ntaps-1))/2;
@@ -56,55 +56,70 @@ Cc_fir = [c1_fir c2_fir c3_fir c4_fir];
 ABCD_ct_tuned = [[Ac Bc];[Cc_fir Dc]];
 
 %% FIR DAC State Space Descr.
-f0 = 1/(ntaps+1);
-num_fir = f0.*ones(1,ntaps+1);
-denom_fir = zeros(1,ntaps+1);
+f0 = 1/(ntaps);
+num_fir = f0.*ones(1,ntaps);
+denom_fir = zeros(1,ntaps);
 denom_fir(1) = 1;
 tf_fir = tf(num_fir, denom_fir,1);
 Adc = dcgain(tf_fir);
 % tf_fir = tf_fir/Adc; 
 sys_fir = ss(tf_fir);
+% figure; impulse(sys_fir)
 
 %% Assemble combined system
-% INFO: [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
-sys_c = ss(Ac, Bc, Cc_fir, Dc);
-% sys_d = mapCtoD(sys_c);
-sys_d = c2d(sys_c,1);
-Ad = sys_d.A; 
-Bd1 = sys_d.B(:,1); Bd2 = sys_d.B(:,2);
-Cd = sys_d.C; Dd = sys_d.D;
-Acomb = [Ad Bd2*sys_fir.C;
-        zeros(ntaps,ord) sys_fir.A];
-Bcomb = [Bd1 Bd2*sys_fir.D;
-        zeros(ntaps,1) sys_fir.B];
-Ccomb = [Cd zeros(1,ntaps)];
-Dcomb = [0 0];
-ABcomb = [Acomb Bcomb];
-CDcomb = [Ccomb Dcomb];
-
-ABCDcomb = [ABcomb;CDcomb]
+% % INFO: [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
+% sys_c = ss(Ac, Bc, Cc_fir, Dc);
+% % sys_d = mapCtoD(sys_c);
+% sys_d = c2d(sys_c,1);
+% Ad = sys_d.A; 
+% Bd1 = sys_d.B(:,1); Bd2 = sys_d.B(:,2);
+% Cd = sys_d.C; Dd = sys_d.D;
+% Acomb = [Ad Bd2*sys_fir.C;
+%         zeros(ntaps,ord) sys_fir.A];
+% Bcomb = [Bd1 Bd2*sys_fir.D;
+%         zeros(ntaps,1) sys_fir.B];
+% Ccomb = [Cd zeros(1,ntaps)];
+% Dcomb = [0 0];
+% ABcomb = [Acomb Bcomb];
+% CDcomb = [Ccomb Dcomb];
+% 
+% ABCDcomb = [ABcomb;CDcomb]
 
 %% Determine coeff. of compensational FIR DAC
+n_imp = ntaps+5;
+impl_dt_ntf = -impL1(ntf_synth,n_imp);
 % Determine pulse response of the prototype loop filter
-n_imp = 15;
-tvec = 1:n_imp;
-l_proto = -impL1(ntf_synth,n_imp);
+[Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct);
+sys_ct = ss( Ac, Bc, Cc, Dc);
+impl_ct = -pulse(sys_ct, [0 1], 1, n_imp, 0);
+impl_ct = squeeze(impl_ct);
 % Determine pulse response of the coefficient-tuned loop filter 
 % with FIR DAC
-[Ac, Bc, Cc, Dc] = partitionABCD(ABCDcomb);
-sys_d = ss( Ac, Bc, Cc, Dc, 1 );
-yy = -impulse(sys_d);
+[Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
+Bc(1,2) = -f0;
+sys_ct_tuned = ss( Ac, Bc, Cc, Dc);
+impl_ct_tuned = -pulse(sys_ct_tuned, [0 ntaps], 1, n_imp, 0);
 % yy = -pulse(sys_c,[0 1],1,n_imp,0);
-% yy = squeeze(yy);
+impl_ct_tuned = squeeze(impl_ct_tuned);
 % Calc difference for first ntaps samples
-
+fc = impl_ct(2:ntaps,2)-impl_ct_tuned(2:ntaps,2);
 % Plot
+tvec = 0:n_imp;
+fc_plt = [0 transpose(fc) zeros(1,n_imp-ntaps+1)];
 figure;
 hold on;
-plot(l_proto,'o-')
-plot(yy(:,1,2),'o-')
+plot(tvec, impl_dt_ntf,'*-')
+plot(tvec, impl_ct(:,2),'o-')
+plot(tvec, impl_ct_tuned(:,2),'o-')
+stem(tvec, fc_plt)
 % plot(yy2(:,1,2),'o-')
-xlim([0 10])
+xlim([0 n_imp])
+ylim([0 max(impl_dt_ntf)])
+set(gca,'FontSize',14)
+title('Sampled Loop Filter Impulse Responses')
+legend('NTF-Prototype', 'CT-Prototype', 'CT FIR-tuned','Coeff. of Fc(z)')
+ylabel('l(t)')
+xlabel('t (s)')
 grid on;
 
 %% FIR DAC State Space Descr. w/ compensation DAC
