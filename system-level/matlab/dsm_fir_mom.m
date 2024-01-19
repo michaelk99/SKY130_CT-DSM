@@ -46,7 +46,7 @@ ntf_ss = ss(ntf_synth);
 [ABCD_ct, tdac2] = realizeNTF_ct(ntf_synth, 'FF');
 
 %% Modify coeff. for use with FIR DAC (Methods of Moments)
-ntaps = 10;
+ntaps = 4;
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct);
 c4_fir = Cc(4);
 c3_fir = Cc(3)+(Cc(4)*(ntaps-1))/2;
@@ -171,73 +171,142 @@ ylabel('p(t)','Fontsize', 14)
 xlabel('t (s)','Fontsize', 14)
 grid on;
 
-% %% FIR DAC State Space Descr. w/ compensation DAC for CIFF-B
-% Afir  = sys_fir.A;
-% %Bfir = ss_fir.B./ss_fir.B(1);
-% Bfir = sys_fir.B;
-% % Cfir = [ss_fir.C.*ss_fir.B(1); ss_fir.C.*ss_fir.B(1)];
-% Cfir = [sys_fir.C; transpose(fc(1:3))];
-% Dfir = [sys_fir.D; 0];
-
-
 %% Assemble CIFF-B 
-% %ABCD_CIFF_B = [ 0  0  0  0  1 -1;
-% %                1  0  0  0  0  0;
-% %                0  1  0  0  0  0;
-% %                k2 k3 k4 0  0 -k1;
-% %                0  0  0  1  0  0];
-% [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned)
-% A_ffb = [0 0 0 0; 1 0 0 0; 0 1 0 0; Cc(1,2) Cc(1,3) Cc(1,4) 0];
-% B_ffb = [1 -1; 0 0; 0 0; 0 -Cc(1,1)];
-% B_ffb_fir = [1 -1 0; 0 0 0; 0 0 0; 0 0 -Cc(1,1)];
-% C_ffb = [0 0 0 1];
-% D_ffb = [0 0];
-% D_ffb_fir = [0 0 0];
-% 
-% AB = [A_ffb B_ffb];
-% CD = [C_ffb D_ffb];
-% ABCD_ffb = [AB;CD];
-% 
-% ABCD_ffb_fir = [A_ffb B_ffb_fir;C_ffb D_ffb_fir];
-% 
-% % Verify
-% [Ac Bc Cc Dc] = partitionABCD(ABCD_ct);
-% sys_c = ss(Ac,Bc,Cc,Dc);
-% sys_d = mapCtoD(sys_c,tdac2);
-% ABCD_ct_sim = [sys_d.a sys_d.b; sys_d.c sys_d.d];
-% 
-% [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ffb);
-% sys_c = ss(Ac,Bc,Cc,Dc);
-% sys_d = mapCtoD(sys_c,tdac2);
-% ABCD_ffb_sim = [sys_d.a sys_d.b; sys_d.c sys_d.d];
-% 
-% % [snr1,amp1] = simulateSNR(ABCD_ct_sim, osr);
-% % [snr2,amp2] = simulateSNR(ABCD_ffb_sim, osr);
-% % 
-% % figure;
-% % hold on;
-% % plot(amp1, snr1);
-% % plot(amp1, snr2);
-% % grid on;
-% 
-% %% Assemble combined system
-% sys_c = ss(A_ffb, B_ffb_fir, C_ffb, D_ffb_fir);
-% % sys_c = ss(Ac, Bc, Cc_fir, Dc);
-% % sys_d = mapCtoD(sys_c);
-% sys_d = c2d(sys_c,1);
-% Ad = sys_d.A; 
-% Bd1 = sys_d.B(:,1); Bd23 = sys_d.B(:,2:3);
-% Cd = sys_d.C; Dd = sys_d.D;
-% Acomb = [Ad Bd23*Cfir;
-%         zeros(ntaps-1,ord) Afir];
-% Bcomb = [Bd1 Bd23*Dfir;
-%         zeros(ntaps-1,1) Bfir];
-% Ccomb = [Cd zeros(1,ntaps-1)];
-% Dcomb = [0 0];
-% ABcomb = [Acomb Bcomb];
-% CDcomb = [Ccomb Dcomb];
-% 
-% ABCDcomb_ffb = [ABcomb;CDcomb]
+%ABCD_CIFF_B = [ 0  0  0  0  1 -1;
+%                1  0  0  0  0  0;
+%                0  1  0  0  0  0;
+%                k2 k3 k4 0  0 -k1;
+%                0  0  0  1  0  0];
+[~, ~, Cc, ~] = partitionABCD(ABCD_ct);
+A_ffb = [0 0 0 0; 1 0 0 0; 0 1 0 0; Cc(1,2) Cc(1,3) Cc(1,4) 0];
+B_ffb = [1 -1; 0 0; 0 0; 0 -Cc(1,1)];
+B_ffb_fir = [1 -1 0; 0 0 0; 0 0 0; 0 0 -Cc(1,1)];
+C_ffb = [0 0 0 1];
+D_ffb = [0 0];
+D_ffb_fir = [0 0 0];
+
+AB = [A_ffb B_ffb];
+CD = [C_ffb D_ffb];
+ABCD_ffb = [AB;CD];
+
+ABCD_ffb_fir = [A_ffb B_ffb_fir;C_ffb D_ffb_fir];
+
+[~, ~, Cc_tuned, ~] = partitionABCD(ABCD_ct_tuned);
+A_ffb_tuned = [0 0 0 0; 1 0 0 0; 0 1 0 0; Cc_tuned(1,2) Cc_tuned(1,3) Cc_tuned(1,4) 0];
+B_ffb_tuned = [1 -1; 0 0; 0 0; 0 -Cc_tuned(1,1)];
+B_ffb_tuned_fir = [1 -1 0; 0 0 0; 0 0 0; 0 0 -Cc_tuned(1,1)];
+C_ffb_tuned = [0 0 0 1];
+D_ffb_tuned = [0 0];
+D_ffb_tuned_fir = [0 0 0];
+
+ABCD_ffb_tuned = [A_ffb_tuned B_ffb_tuned;C_ffb_tuned D_ffb_tuned];
+ABCD_ffb_tuned_fir = [A_ffb_tuned B_ffb_tuned_fir;C_ffb_tuned D_ffb_tuned_fir];
+
+%% Verify CIFF-B
+[Ac Bc Cc Dc] = partitionABCD(ABCD_ct);
+sys_c = ss(Ac,Bc,Cc,Dc);
+sys_d = mapCtoD(sys_c,tdac2);
+ABCD_ct_sim = [sys_d.a sys_d.b; sys_d.c sys_d.d];
+
+[Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ffb);
+sys_c = ss(Ac,Bc,Cc,Dc);
+sys_d = mapCtoD(sys_c,tdac2);
+ABCD_ffb_sim = [sys_d.a sys_d.b; sys_d.c sys_d.d];
+
+[snr1,amp1] = simulateSNR(ABCD_ct_sim, osr);
+[snr2,amp2] = simulateSNR(ABCD_ffb_sim, osr);
+
+figure;
+hold on;
+plot(amp1, snr1);
+plot(amp1, snr2);
+grid on;
+
+%% Determine coeff. of compensational FIR DAC (CIFF-B)
+
+% Determine pulse response of the prototype loop filter 
+[Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ffb_fir);
+sys_ffb = ss( Ac, Bc, Cc, Dc);
+tdac_ffb = [[0 1];[0 1];[0 1]];
+impl_ffb = -pulse(sys_ffb, tdac_ffb, 1, n_imp, 1);
+impl_ffb = squeeze(impl_ffb);
+impl_ffb = impl_ffb(:,2)+impl_ffb(:,3);
+
+% Determine pulse response of the coefficient-tuned loop filter 
+% with FIR DAC
+[Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ffb_tuned_fir);
+Bc(1,2) = -f0;
+sys_ffb_tuned = ss( Ac, Bc, Cc, Dc);
+tdac_ffb_tuned = [[0 1];[0 ntaps];[0 1]];
+impl_ffb_tuned = -pulse(sys_ffb_tuned, tdac_ffb_tuned, 1, n_imp, 1);
+impl_ffb_tuned = squeeze(impl_ffb_tuned);
+impl_ffb_tuned = impl_ffb_tuned(:,2)+impl_ffb_tuned(:,3);
+
+fc_ffb = abs(impl_ffb(2:ntaps)-impl_ffb_tuned(2:ntaps));
+
+fc_plt = [0 transpose(fc_ffb) zeros(1,n_imp-ntaps+1)];
+figure;
+hold on;
+plot(tvec, impl_dt_ntf,'*-','LineWidth',1.2)
+plot(tvec, impl_ffb,'o-','LineWidth',1.2)
+plot(tvec, impl_ffb_tuned,'o--','LineWidth',1.2)
+stem(tvec, fc_plt,'LineWidth',1)
+xlim([0 n_imp])
+ylim([0 max(impl_dt_ntf)])
+set(gca,'FontSize',14)
+title('Sampled Loop Filter Impulse Responses (CIFF-B)','Fontsize', 14)
+legend('NTF-Prototype', 'CT-FF-B','CT-FF-B -FIR-tuned','Coeff. of Fc(z)','Fontsize', 14)
+ylabel('p(t)','Fontsize', 14)
+xlabel('t (s)','Fontsize', 14)
+grid on;
+
+%% FIR DAC State Space Descr. w/ compensation DAC for CIFF-B
+Afir  = sys_fir.A;
+Bfir = sys_fir.B;
+Cfir = [sys_fir.C; 0 transpose(fc_ffb(2:end))];
+Dfir = [sys_fir.D; fc_ffb(1)];
+
+%% Assemble combined system
+sys_c = ss(A_ffb_tuned, B_ffb_tuned_fir, C_ffb_tuned, D_ffb_tuned_fir);
+% sys_c = ss(Ac, Bc, Cc_fir, Dc);
+% sys_d = mapCtoD(sys_c);
+sys_d = c2d(sys_c,1);
+Ad = sys_d.A; 
+Bd1 = sys_d.B(:,1); Bd23 = sys_d.B(:,2:3);
+Cd = sys_d.C; Dd = sys_d.D;
+Acomb = [Ad Bd23*Cfir;
+        zeros(ntaps-1,ord) Afir];
+Bcomb = [Bd1 Bd23*Dfir;
+        zeros(ntaps-1,1) Bfir];
+Ccomb = [Cd zeros(1,ntaps-1)];
+Dcomb = [0 0];
+ABcomb = [Acomb Bcomb];
+CDcomb = [Ccomb Dcomb];
+
+ABCDcomb_ffb = [ABcomb;CDcomb]
+
+%% Verify impulse response for CIFF-B
+
+[Adcomb, Bdcomb, Cdcomb, Ddcomb] = partitionABCD(ABCDcomb_ffb);
+sys_fir_sim = ss(Adcomb, Bdcomb, Cdcomb, Ddcomb, 1);
+impl_fir_sim = -impulse(sys_fir_sim,tvec);
+impl_fir_sim = squeeze(impl_fir_sim);
+
+figure;
+hold on;
+plot(tvec, impl_dt_ntf,'*-','LineWidth',1.2)
+plot(tvec, impl_ffb,'o-','LineWidth',1.2)
+plot(tvec, impl_ffb_tuned,'o--','LineWidth',1.2)
+stem(tvec, fc_plt,'LineWidth',1)
+plot(tvec, impl_fir_sim(:,2),'o--','LineWidth',1.2)
+% xlim([0 n_imp])
+% ylim([0 max(impl_dt_ntf)])
+set(gca,'FontSize',14)
+title('Sampled Loop Filter Impulse Responses (CIFF-B)','Fontsize', 14)
+legend('NTF-Prototype', 'CT-FF-B','CT-FF-B FIR-tuned','Coeff. of Fc(z)','DT-FIR-tuned + Fc(z)','Fontsize', 14)
+ylabel('p(t)','Fontsize', 14)
+xlabel('t (s)','Fontsize', 14)
+grid on;
 
 
 
