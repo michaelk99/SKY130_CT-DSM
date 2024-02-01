@@ -714,6 +714,8 @@ class Modulator:
         self._ABCD = ABCD
         if umax != None:
             self._msi = umax/(self._nLev-1)     # normalize to full scale
+        else:
+            self._msi = 1
         (ntf, stf) = ds.calculateTF(ABCD, k=self._k)
         self._ntf = ntf
         self._stf = stf
