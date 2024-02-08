@@ -46,7 +46,7 @@ ntf_ss = ss(ntf_synth);
 [ABCD_ct, tdac2] = realizeNTF_ct(ntf_synth, 'FF');
 
 %% Modify coeff. for use with FIR DAC (Methods of Moments)
-ntaps = 10;
+ntaps = 3;
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct);
 c4_fir = Cc(4);
 c3_fir = Cc(3)+(Cc(4)*(ntaps-1))/2;
@@ -60,11 +60,22 @@ f0 = 1/(ntaps);
 num_fir = f0.*ones(1,ntaps);
 denom_fir = zeros(1,ntaps);
 denom_fir(1) = 1;
-tf_fir = tf(num_fir, denom_fir,1);
+tf_fir = tf(num_fir, denom_fir, 1);
 Adc = dcgain(tf_fir);
 % tf_fir = tf_fir/Adc; 
 sys_fir = ss(tf_fir);
 % figure; impulse(sys_fir)
+
+if ntaps == 2
+    sys_fir.C = sys_fir.B;
+    sys_fir.B = 1;
+end
+
+%% Differentiator State Space Descr.
+num_dif = [1 -1];
+denom_dif = [1 0];
+tf_dif = tf(num_dif, denom_dif, 1);
+sys_dif = ss(tf_dif);
 
 %% Determine coeff. of compensational FIR DAC
 n_imp = ntaps+5;
@@ -114,8 +125,8 @@ Dc_fir = [0 0 -1];
 %% Add first order feedback path to state space description of CT prototype
 % for alternative FIR compensation
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
-Bc_fir_alt = [1 -1 0; 0 0 0; 0 0 -1; 0 0 0];
-Dc_fir_alt = [0 0 0];
+% Bc_fir_alt = [1 -1 0; 0 0 0; 0 0 -1; 0 0 0];
+% Dc_fir_alt = [0 0 0];
 %% FIR DAC State Space Descr. w/ compensation DAC
 Afir  = sys_fir.A;
 %Bfir = ss_fir.B./ss_fir.B(1);
@@ -125,6 +136,53 @@ Cfir = [sys_fir.C; fc'];
 Dfir = [sys_fir.D; 0];
 % Cfir = [sys_fir.C; 0 fc(2:ntaps-1)'];
 % Dfir = [sys_fir.D; fc(1)];
+
+sys_fir = ss(Afir, Bfir, Cfir, Dfir, 1);
+
+figure; bode(sys_fir); title('Bode Plot of FIR + Comp.')
+
+
+% Add differntiator after compensation DAC
+Adif = zeros(1,1);
+Bdif = [0 1];
+Cdif = [0; -1];
+Ddif = [1 0; 0 1];
+sys_dif = ss(Adif, Bdif, Cdif, Ddif, 1);
+figure
+bode(sys_dif);
+
+sys_firdif = series(sys_fir, sys_dif);
+
+% Add differntiator before compensation DAC
+% Adif = zeros(1,1);
+% Bdif = 1;
+% Cdif = [0; -1];
+% Ddif = [1; 1];
+% sys_dif = ss(Adif, Bdif, Cdif, Ddif, 1);
+% 
+% figure
+% bode(sys_dif);
+
+% 
+% figure
+% bode(sys_firdif)
+% hold on;
+% bode(sys_diffir)
+% title('Bode Plot FIR-DIF Cascade')
+
+Afirdif = sys_firdif.A;
+Bfirdif = sys_firdif.B;
+Cfirdif = sys_firdif.C;
+Dfirdif = sys_firdif.D;
+
+% dimAdif = size(Adif);
+% Afirdif = [Afir zeros(ntaps-1,dimAdif(2)); Bdif*Cfir Adif];
+% Bfirdif = [Bfir;Bdif*Dfir];
+% Cfirdif = [Ddif*Cfir Cdif];
+% Dfirdif = Ddif*Dfir;
+sys_firdif = ss(Afirdif, Bfirdif, Cfirdif, Dfirdif, 1);
+figure;bode(sys_firdif)
+figure; impulse(sys_firdif); title('Impulse Response of FIR + Dif.')
 
 %% Assemble combined system
 % % INFO: [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
@@ -152,28 +210,46 @@ Dfir = [sys_fir.D; 0];
 
 %% Assemble alternative, w/ first order compensation path
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
-sys_c = ss(Ac, Bc_fir, Cc, Dc_fir);
+sys_c = ss(Ac, Bc, Cc, Dc);
 % sys_c = ss(Ac, Bc, Cc_fir, Dc);
-tdac_ = [[-1 -1]; [0 1]; [0 1]];
-sys_d = mapCtoD(sys_c, tdac_);
-sys_c
-% sys_d = c2d(sys_c,1,'zoh');
-sys_d
+% sys_d_alt = mapCtoD(sys_c, [[-1 -1];[0 1]]);
+% sys_c
+sys_d = c2d(sys_c,1,'zoh');
+% sys_d
+% sys_d_alt
 Ad = sys_d.A; 
-Bd1 = sys_d.B(:,1); Bd23 = sys_d.B(:,2:3);
+Bd1 = sys_d.B(:,1); Bd23 = [sys_d.B(:,2)'; [0 0 0 -1]]';
 Cd = sys_d.C; 
-Dd1 = sys_d.D(1,1); Dd23 = sys_d.D(1,2:3);
+Dd1 = sys_d.D(1,1); Dd23 = [sys_d.D(1,2)'; 0]';
 
-Acomb = [Ad Bd23*Cfir;
-        zeros(ntaps-1,ord) Afir];
-Bcomb = [Bd1 Bd23*Dfir;
-        zeros(ntaps-1,1) Bfir];
-Ccomb = [Cd Dd23*Cfir];
-Dcomb = [Dd1 Dd23*Dfir];
+sizeFirDif = size(Afirdif);
+padSize = sizeFirDif(1);
+Acomb = [Ad Bd23*Cfirdif;
+        zeros(padSize,ord) Afirdif];
+Bcomb = [Bd1 Bd23*Dfirdif;
+        zeros(padSize,1) Bfirdif];
+Ccomb = [Cd Dd23*Cfirdif];
+Dcomb = [Dd1 Dd23*Dfirdif];
 ABcomb = [Acomb Bcomb];
 CDcomb = [Ccomb Dcomb];
 
 ABCDcomb = [ABcomb;CDcomb]
+
+sys_comb = ss(Acomb, Bcomb, Ccomb, Dcomb, 1);
+figure;
+bode(sys_comb)
+title('Bode Plot of combined discrete system')
+
+% Use Matlab to connect systems
+Bd = [sys_d.B'; [0 0 0 -1]]'; 
+Dd = [sys_d.D'; 0]';
+sys_d_2 = ss(sys_d.A, Bd, sys_d.C, Dd, 1);
+sys_comb_2 = series(sys_firdif, sys_d_2, [1 2], [2 3]);
+
+% add the missing (main) input u
+ABCDcomb = [[sys_comb_2.A [sys_d.B(:,1)' zeros(1,ntaps)]' sys_comb_2.B]; [sys_comb_2.C sys_d.D(:,1) sys_comb_2.D]]
+
+
 
 %% Verify impulse response
 n_imp = ntaps+5;
@@ -182,7 +258,7 @@ impl_dt_ntf = -impL1(ntf_synth,n_imp);
 
 [Adcomb, Bdcomb, Cdcomb, Ddcomb] = partitionABCD(ABCDcomb);
 sys_fir_sim = ss(Adcomb, Bdcomb, Cdcomb, Ddcomb, 1);
-impl_fir_sim = -impulse(sys_fir_sim,tvec);
+impl_fir_sim = -impulse(sys_fir_sim, tvec);
 impl_fir_sim = squeeze(impl_fir_sim);
 
 
@@ -195,7 +271,7 @@ plot(tvec, impl_ct_tuned(:,2),'o-','LineWidth',1.2)
 stem(tvec, fc_plt,'LineWidth',1)
 plot(tvec, impl_fir_sim(:,2),'o--','LineWidth',1.2)
 xlim([0 n_imp])
-ylim([0 max(impl_dt_ntf)])
+%ylim([0 max(impl_dt_ntf)])
 set(gca,'FontSize',14)
 title('Sampled Loop Filter Impulse Responses','Fontsize', 14)
 legend('NTF-Prototype', 'CT-Prototype', 'CT FIR-tuned','Coeff. of Fc(z)','DT-FIR-tuned + Fc(z)','Fontsize', 14)
@@ -366,7 +442,12 @@ semilogx(f.*fs+fres,p);
 semilogx(f.*fs+fres,p);
 legend('CT-FF-Prototype','Band edge (fb)','CT-FF-Prototype (smoothed)','CT-FF FIR+Fc(z) (smoothed)')
 
-
+figure;
+bode(sys_d);
+hold on;
+bode(sys_fir_sim);
+title('Compare Bode Plots of Prototype and Compensated Systems')
+legend('Prototype','Compensated')
 
 %% 8.9 Design Example from Bluebook
 % 3rd order modulator, OSR=64, OBG=2.5
