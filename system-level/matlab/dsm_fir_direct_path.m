@@ -37,7 +37,7 @@ N_FFT = ceil(fs/fres);
 %% Stimulus (frequency domain plotting)
 fsignal = 18;
 n = 0:N_FFT-1;
-ampldBFS = -6;
+ampldBFS = -10;
 u = (10^(ampldBFS/20))*FS/2*sin(2*pi*fsignal./fs*n);
 
 %% Realize Mod (CT)
@@ -46,7 +46,7 @@ ntf_ss = ss(ntf_synth);
 [ABCD_ct, tdac2] = realizeNTF_ct(ntf_synth, 'FF');
 
 %% Modify coeff. for use with FIR DAC (Methods of Moments)
-ntaps = 12;
+ntaps = 4;
 [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct);
 c4_fir = Cc(4);
 c3_fir = Cc(3)+(Cc(4)*(ntaps-1))/2;
@@ -64,7 +64,16 @@ tf_fir = tf(num_fir, denom_fir,1);
 Adc = dcgain(tf_fir);
 % tf_fir = tf_fir/Adc; 
 sys_fir = ss(tf_fir);
-% figure; impulse(sys_fir)
+
+% Bugfix
+if ntaps == 2
+    sys_fir.C = sys_fir.B;
+    sys_fir.B = 1;
+end
+
+% Plots
+figure; impulse(sys_fir); title('Impulse Response of FIR Filter')
+figure; bode(sys_fir); title('Bode Plot of FIR Filter')
 
 %% Determine coeff. of compensational FIR DAC
 n_imp = ntaps+5;
@@ -103,7 +112,7 @@ fc = impl_ct(2:ntaps,2)-impl_ct_tuned(2:ntaps,2);
 % title('Sampled Loop Filter Impulse Responses','Fontsize', 14)
 % legend('NTF-Prototype', 'CT-Prototype', 'CT FIR-tuned','Coeff. of Fc(z)','Fontsize', 14)
 % ylabel('p(t)','Fontsize', 14)
-% xlabel('t (s)','Fontsize', 14)
+% xlabel('t in s','Fontsize', 14)
 % grid on;
 
 %% Add direct path input to state space description of CT prototype
@@ -118,26 +127,28 @@ Bfir = sys_fir.B;
 % Cfir = [ss_fir.C.*ss_fir.B(1); ss_fir.C.*ss_fir.B(1)];
 Cfir = [sys_fir.C; fc'];
 Dfir = [sys_fir.D; 0];
+% Cfir = [sys_fir.C; 0 fc(2:end)'];
+% Dfir = [sys_fir.D; fc(1)];
+sys_fir_simo = ss(Afir, Bfir, Cfir, Dfir, 1);
+figure; impulse(sys_fir_simo); title('Impulse Response of F(z) and Fc(z)')
+figure; bode(sys_fir_simo); title('Bode Plot of F(z) + Fc(z)')
 
 %% Assemble combined system
 % INFO: [Ac, Bc, Cc, Dc] = partitionABCD(ABCD_ct_tuned);
 sys_c = ss(Ac, Bc_fir, Cc, Dc_fir);
-% sys_d = mapCtoD(sys_c);
 sys_d = c2d(sys_c,1);
+
 Ad = sys_d.A; 
-Bd1 = sys_d.B(:,1); Bd2 = sys_d.B(:,2);
-Cd = sys_d.C; Dd = sys_d.D;
+Bd1 = sys_d.B(:,1); Bd23 = [sys_d.B(:,2)'; [0 0 0 0]]';
+Cd = sys_d.C; 
+Dd1 = sys_d.D(1,1); Dd23 = [sys_d.D(1,2)'; -1]';
 
-Cfir1 = Cfir(1,:);
-Cfir2 = Cfir(2,:);
-
-Acomb = [Ad Bd2*Cfir1;
-        zeros(ntaps-1,ord) Afir];
-Bcomb = [Bd1 Bd2*Dfir(1);
-        zeros(ntaps-1,1) Bfir];
-% Ccomb = [Cd zeros(1,ntaps-1)];
-Ccomb = [Cd [Dd(3)*Cfir2]];
-Dcomb = [0 Dd(3)*Dfir(2)];
+Acomb = [Ad Bd23*Cfir;
+        zeros(ntaps-1,ord) Afir]
+Bcomb = [Bd1 Bd23*Dfir;
+        zeros(ntaps-1,1) Bfir]
+Ccomb = [Cd Dd23*Cfir]
+Dcomb = [Dd1 Dd23*Dfir]
 ABcomb = [Acomb Bcomb];
 CDcomb = [Ccomb Dcomb];
 
@@ -167,14 +178,14 @@ ylim([0 max(impl_dt_ntf)])
 set(gca,'FontSize',14)
 title('Sampled Loop Filter Impulse Responses','Fontsize', 14)
 legend('NTF-Prototype', 'CT-Prototype', 'CT FIR-tuned','Coeff. of Fc(z)','DT-FIR-tuned + Fc(z)','Fontsize', 14)
-ylabel('p(t)','Fontsize', 14)
-xlabel('t (s)','Fontsize', 14)
+ylabel('$p(t)$ (1)','Fontsize', 14, 'Interpreter', 'Latex')
+xlabel('$t$ (s)','Fontsize', 14, 'Interpreter', 'Latex')
 grid on;
 
 
 %% Simulate, plot and compare
-[Ac Bc Cc Dc] = partitionABCD(ABCD_ct);
-sys_c = ss(Ac,Bc,Cc,Dc);
+[Ac_prot Bc_prot Cc_prot Dc_prot] = partitionABCD(ABCD_ct);
+sys_c = ss(Ac_prot,Bc_prot,Cc_prot,Dc_prot);
 sys_d = mapCtoD(sys_c,tdac2);
 ABCD_ct_sim = [sys_d.a sys_d.b; sys_d.c sys_d.d];
 
@@ -204,6 +215,13 @@ semilogx(f.*fs+fres,p);
 [f,p] = logsmooth(V4,fsignal/fres);
 semilogx(f.*fs+fres,p);
 legend('CT-FF-Prototype','Band edge (fb)','CT-FF-Prototype (smoothed)','CT-FF FIR+Fc(z) (smoothed)','CT-FF FIR+Fc(z) scaled (smoothed)')
+
+figure;
+bode(sys_d);
+hold on;
+bode(sys_fir_sim);
+title('Compare Bode Plots of Prototype and Compensated Systems')
+legend('Prototype','Compensated')
 
 %% Extract scaled unity gain frequencies and feed forward coefficients
 [Ads, Bds, Cds, Dds] = partitionABCD(ABCDcomb_scaled);
