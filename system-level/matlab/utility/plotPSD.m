@@ -32,6 +32,6 @@ function plotPSD(V, NBW, N, fres, fb, optLog, optdB)
     xline(fb, 'k--');
     text(1e3, -225, sprintf('NBW = %.2d', NBW),'Fontsize', 14) 
     set(gca,'FontSize',14)
-    grid on; xlabel('Frequency [Hz]'); ylabel('PSD [dBFS/NBW]')
+    grid on; xlabel('Frequency $f$ (Hz)', 'Interpreter', 'Latex'); ylabel('PSD (dBFS/NBW)', 'Interpreter', 'Latex')
     title('Output Spectrum $\Sigma\Delta$ Modulator', 'Interpreter', 'Latex');
 end
