@@ -62,6 +62,54 @@ plotPSD(V, NBW, N, fres, fb, true);
 SNR
 SNDR
 IBN
+
+%% ************************************************************
+% Simulate max. signal peaks over many interations
+% ************************************************************
+nofruns = 100;
+w1MaxVec = zeros(1,nofruns);
+w2MaxVec = w1MaxVec; w3MaxVec = w1MaxVec; w4MaxVec = w1MaxVec;
+
+noiseVec_rms = 0.01e-6.*ones(1,4);
+
+
+for i=1:nofruns
+    txt = sprintf("Run %d/%d", i, nofruns);
+    disp(txt)
+    [~, ~, ~, w1, w2, w3, w4] = simDSM4CT_FF_1bit(OSR, ctSteps, fb, fin, fres, amplitude, offset, 0, 50, omCoeff, cCoeff, Vref, A0Vec, 0, noiseVec_rms, wLimVec, [true true true true], false);
+    w1MaxVec(i) = max(abs(w1));
+    w2MaxVec(i) = max(abs(w2));
+    w3MaxVec(i) = max(abs(w3));
+    w4MaxVec(i) = max(abs(w4));
+    clear w1 w2 w3 w4
+end
+
+figure;
+plot(w1MaxVec)
+figure;
+plot(w2MaxVec)
+figure;
+plot(w3MaxVec)
+figure;
+plot(w4MaxVec)
+w1MaxMean = mean(w1MaxVec)
+w2MaxMean = mean(w2MaxVec)
+w3MaxMean = mean(w3MaxVec)
+w4MaxMean = mean(w4MaxVec)
+
+w1MaxVar = var(w1MaxVec)
+w2MaxVar = var(w2MaxVec)
+w3MaxVar = var(w3MaxVec)
+w4MaxVar = var(w4MaxVec)
+
+%% ************************************************************
+% Avg. Max. States
+% ************************************************************
+w1Max = 0.7152;
+w2Max = 1.2376;
+w3Max = 3.8047;
+w4Max = 41.669;
+
 %% ************************************************************
 % Scaling
 % ************************************************************
