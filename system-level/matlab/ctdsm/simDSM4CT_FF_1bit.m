@@ -87,8 +87,13 @@ pVec = [exp(-omCoeff(1)/(A0Vec(1))/fs) exp(-omCoeff(2)/(A0Vec(2))/fs) exp(-omCoe
 % ****************************************
 % Pre-allocate and initialize array variables => faster code
 in = offset+amplitude*sin(2*pi*(fin/fs)*[1:N*nr_steps]/nr_steps)+amplitude_inter.*sin(2*pi*(finter/fs)*[1:N*nr_steps]/nr_steps);
-y  = zeros(1,N); y(1) = Vref_n; wsum = y;
+y  = zeros(1,N); y(1) = 2*(randi(2, 1)-1.5); wsum = y;
 w1 = zeros(1,N*nr_steps); w2 = w1; w3 = w1; w4 = w1; w1_in = w1;
+sigma_init = 1e-5;
+w1(1) = sigma_init*randn();
+w2(1) = sigma_init*randn();
+w3(1) = sigma_init*randn();
+w4(1) = sigma_init*randn();
 
 DAC_Test=zeros(1,N*nr_steps);
 DAC = DAC_wave(1,:);
