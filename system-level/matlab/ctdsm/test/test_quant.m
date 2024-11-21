@@ -41,7 +41,7 @@ q_out = q_out./M*2*vref;
 figure;
 % plot(in, q_out);
 hold on;
-plot(in,index);
+% plot(in,index);
 plot(in, q_out);
 grid on;
 
@@ -49,33 +49,44 @@ grid on;
 
 %% Test mbq()
 clear all; close all; clc;
-vref = 0.36;
-nlev = 2.^2;
-in = -vref:vref/100:vref;
+vref = 0.75;
+% nlev = 2.^2;
+nlev = 3;
+% in = -vref:vref/100:vref;
 fin = 18;
 fs = 2.^16;
 fres = 1/8;
 N = floor(fs/fres);
 in = vref.*sin(2*pi*(fin/fs)*[1:N]);
 [out, thermo] = mbq(in, nlev, vref);
+out4 = ds_quantize((nlev-1)*in/vref,nlev);
+thermo4 = (out4+(nlev-1))/2;
  
 figure;
 plot(in,out)
+hold on;
+plot(in,out4)
 title('mbq() Test - Sine Input - Vector')
 grid on;
 figure;
 plot(in, thermo)
+hold on;
+plot(in, thermo4)
 title('mbq() Test - Sine Input - Thermocode - Vector')
 grid on;
 
 out2 = zeros(1,length(in));
+out3 = out2;
 thermo2 = out2;
 for i=1:length(in)
     [out2(i), thermo2(i)] = mbq(in(i), nlev, vref);
+    out3(i) = ds_quantize((nlev-1)*in(i)/vref, nlev);
 end
 
 figure;
 plot(in,out2)
+hold on;
+plot(in,out3)
 grid on;
 title('mbq() Test - Sine Input - Elementwise')
 figure;
