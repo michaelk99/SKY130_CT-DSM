@@ -79,7 +79,12 @@ function [snr, sndr, ibn, V, NBW, spwr, snhd3r, fbin, nb, ibn_cum, HD3, hd3pwr] 
         noise_bins_snr = setdiff(inband_bins, [dc_bins, signal_bins, hd2_bins, hd3_bins]);
         noise_bins_snhd3r = setdiff(inband_bins, [dc_bins, signal_bins, hd2_bins]);
     end
-    spwr = sum(abs(V(signal_bins+1)).^2);
+
+    if signal_bins(:) > 0
+        spwr = sum(abs(V(signal_bins+1)).^2);
+    else
+        spwr = 0;
+    end
     hd3pwr = sum(abs(V(hd3_bins+1)).^2);
     npwr_sndr = sum(abs(V(noise_bins_sndr+1)).^2);
     npwr_snhd3r = sum(abs(V(noise_bins_snhd3r+1)).^2);
@@ -88,7 +93,9 @@ function [snr, sndr, ibn, V, NBW, spwr, snhd3r, fbin, nb, ibn_cum, HD3, hd3pwr] 
 
     % calc cummualted inband noise vector
     Vnoise = V(inband_bins+1);
-    Vnoise(signal_bins+1) = 0;
+    if spwr ~= 0
+        Vnoise(signal_bins+1) = 0;
+    end
     Vnoise(dc_bins+1) = 0;
     Vnoise(hd2_bins+1) = 0;
     Vnoise(hd3_bins+1) = 0;
