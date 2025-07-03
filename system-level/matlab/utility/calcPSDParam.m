@@ -96,7 +96,7 @@ function [snr, sndr, ibn, V, NBW, spwr, snhd3r, fbin, nb, ibn_cum, HD3, hd3pwr] 
     % calc cummualted inband noise vector
     Vnoise = V(inband_bins+1);
     if spwr ~= 0
-        Vnoise(signal_bins+1) = 0;
+        Vnoise(signal_bins+1) = Vnoise(signal_bins(1)-1);
     end
     Vnoise(dc_bins+1) = Vnoise(dc_bins+11);
     Vnoise(hd2_bins+1) = Vnoise(hd2_bins(1)-1);
