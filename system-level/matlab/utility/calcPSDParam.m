@@ -52,8 +52,10 @@ function [snr, sndr, ibn, V, NBW, spwr, snhd3r, fbin, nb, ibn_cum, HD3, hd3pwr] 
             bins = (fbin+nb_leak):(fbin+nb_leak+1);
         end
     end
-
-    dc_bins = 0:(nb-1)/2;
+    
+    % Ignore first 10 bins for noise calc.
+    %dc_bins = 0:(nb-1)/2;
+    dc_bins = 0:10;
 %   dc_bins = 0:ceil(1.5./fres);    % exclude if fres is too small
     if nb_leak < nb-1
         signal_bins = fbin-(nb-1)/2:fbin+(nb-1)/2;
@@ -96,9 +98,9 @@ function [snr, sndr, ibn, V, NBW, spwr, snhd3r, fbin, nb, ibn_cum, HD3, hd3pwr] 
     if spwr ~= 0
         Vnoise(signal_bins+1) = 0;
     end
-    Vnoise(dc_bins+1) = 0;
-    Vnoise(hd2_bins+1) = 0;
-    Vnoise(hd3_bins+1) = 0;
+    Vnoise(dc_bins+1) = Vnoise(dc_bins+11);
+    Vnoise(hd2_bins+1) = Vnoise(hd2_bins(1)-1);
+    Vnoise(hd3_bins+1) = Vnoise(hd3_bins(1)-1);
     ibn_cum = cumsum((abs(Vnoise)).^2)./NBW./N;
     
     snr = 10*log10(spwr/npwr_snr);
